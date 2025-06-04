@@ -684,16 +684,16 @@
                 const wasOnGround = this.player.onGround;
                 
                 // Mouvement horizontal
-                if (this.keys['arrowleft'] || this.keys['a']) {
+                if (this.keys['arrowleft'] || this.keys['d']) {
                     this.player.vx = -this.MOVE_SPEED;
-                } else if (this.keys['arrowright'] || this.keys['d']) {
+                } else if (this.keys['arrowright'] || this.keys['q']) {
                     this.player.vx = this.MOVE_SPEED;
                 } else {
                     this.player.vx *= 0.8; // Friction
                 }
                 
                 // Saut
-                if ((this.keys[' '] || this.keys['arrowup'] || this.keys['w']) && this.player.onGround) {
+                if ((this.keys[' '] || this.keys['arrowup'] || this.keys['z']) && this.player.onGround) {
                     this.player.vy = this.JUMP_FORCE - this.player.jumpBoost;
                     this.player.jumpBoost = 0;
                     this.player.onGround = false;
