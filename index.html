@@ -305,11 +305,39 @@
         .pulsing {
             animation: pulse 1s infinite;
         }
+        .language-selector {
+             position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+        }
+
+        .language-select {
+            background: rgba(74, 144, 226, 0.2);
+            border: 2px solid #4a90e2;
+            border-radius: 5px;
+            color: white;
+            padding: 8px 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+    cursor: pointer;
+        }        
+
+.language-select option {
+    background: #1a1a2e;
+    color: white;
+}
     </style>
 </head>
 <body>
     <div class="game-container">
          <button id="fullscreenBtn" class="fullscreen-btn">🔳 Plein Écran</button>
+        <div class="language-selector">
+            <select id="languageSelect" class="language-select">
+                <option value="fr">🇫🇷 Français</option>
+                <option value="en">🇬🇧 English</option>
+            </select>
+        </div>
         <div class="header">
             <h1>🎮 Pix’Adventure</h1>
             <div class="map-info" id="mapInfo">Chargez une image de map pour commencer</div>
@@ -382,6 +410,88 @@
                     VIOLET: [255, 0, 255],   // Boost de saut
                     WHITE: [255, 255, 255]   // Arrière-plan
                 };
+
+                // Système de traduction
+                this.TRANSLATIONS = {
+                    fr: {
+                        title: "🎮 Pix'Adventure 🎨",
+                        loadMap: "📁 Charger une Map",
+                        mapInfo: "Chargez une image de map pour commencer",
+                        fullscreen: "🔳 Plein Écran",
+                        exitFullscreen: "🔲 Quitter",
+                        score: "💰 Score:",
+                        lives: "❤️ Vies:",
+                        sandbox: "🏖️ Bac à sable",
+                        sandboxActive: "🏖️ Mode Normal",
+                        editor: "🎨 Éditeur",
+                        controls: "🎯 CONTRÔLES",
+                        controlsText: "← → ou A D : Déplacement | ↑ ou W ou ESPACE : Saut",
+                        controlsText2: "F12 : Mode Debug | R : Redémarrer niveau",
+                        mapLoaded: "Map chargée ! Bonne chance !",
+                        loadError: "Erreur lors du chargement de la map !",
+                        startMessage: "Chargez une map pour commencer l'aventure !",
+                        victory: "🎉 VICTOIRE ! 🎉",
+                        restart: "🔄 Rejouer",
+                        newMap: "📁 Nouvelle Map",
+                        gameOver: "💀 GAME OVER ! Appuyez sur R pour recommencer",
+                        respawn: "💀 Respawn !",
+                        checkpoint: "🏁 Checkpoint activé !",
+                        jumpBoost: "⚡ Boost de saut activé !",
+                        sandboxActivated: "🏖️ Mode Bac à Sable activé - Vies infinies !",
+                        normalMode: "🎮 Mode Normal activé",
+                        levelRestarted: "🔄 Niveau redémarré !",
+                        welcomeTitle: "🎮 Pix'Adventure",
+                        welcomeText: "Chargez une image de map pour commencer",
+                        mapColors1: "Map basée sur les couleurs : Noir=Mur, Jaune=Pièce, Rouge=Mort",
+                        mapColors2: "Vert=Spawn, Bleu=Fin, Cyan=Checkpoint, Violet=Boost",
+                        finalScore: "💰 Score Final:",
+                        coins: "🪙 Pièces:",
+                        livesLeft: "❤️ Vies Restantes:",
+                        mode: "🎮 Mode:",
+                        perfect: "⭐ PARFAIT ! Toutes les pièces collectées !",
+                        normal: "🎯 Normal"
+                    },
+                    en: {
+                        title: "🎮 Pix'Adventure 🎨",
+                        loadMap: "📁 Load Map",
+                        mapInfo: "Load a map image to start",
+                        fullscreen: "🔳 Fullscreen",
+                        exitFullscreen: "🔲 Exit",
+                        score: "💰 Score:",
+                        lives: "❤️ Lives:",
+                        sandbox: "🏖️ Sandbox",
+                        sandboxActive: "🏖️ Normal Mode",
+                        editor: "🎨 Editor",
+                        controls: "🎯 CONTROLS",
+                        controlsText: "← → or A D: Move | ↑ or W or SPACE: Jump",
+                        controlsText2: "F12: Debug Mode | R: Restart level",
+                        mapLoaded: "Map loaded! Good luck!",
+                        loadError: "Error loading the map!",
+                        startMessage: "Load a map to start the adventure!",
+                        victory: "🎉 VICTORY! 🎉",
+                        restart: "🔄 Play Again",
+                        newMap: "📁 New Map",
+                        gameOver: "💀 GAME OVER! Press R to restart",
+                        respawn: "💀 Respawn!",
+                        checkpoint: "🏁 Checkpoint activated!",
+                        jumpBoost: "⚡ Jump boost activated!",
+                        sandboxActivated: "🏖️ Sandbox Mode activated - Infinite lives!",
+                        normalMode: "🎮 Normal Mode activated",
+                        levelRestarted: "🔄 Level restarted!",
+                        welcomeTitle: "🎮 Pix'Adventure",
+                        welcomeText: "Load a map image to start",
+                        mapColors1: "Color-based map: Black=Wall, Yellow=Coin, Red=Death",
+                        mapColors2: "Green=Spawn, Blue=End, Cyan=Checkpoint, Purple=Boost",
+                        finalScore: "💰 Final Score:",
+                        coins: "🪙 Coins:",
+                        livesLeft: "❤️ Lives Left:",
+                        mode: "🎮 Mode:",
+                        perfect: "⭐ PERFECT! All coins collected!",
+                        normal: "🎯 Normal"
+    }
+};
+
+                this.currentLanguage = 'fr';
                 
                 // État du jeu
                 this.gameState = {
@@ -442,6 +552,7 @@
                 this.setupSkinColorPicker();
                 this.setupSandboxMode();
                 this.setupEditor();
+                this.setupLanguage();
                 this.showMessage("Chargez une map pour commencer l'aventure !");
                 this.gameLoop();
             }
@@ -518,6 +629,54 @@
                 });
             }
 
+            setupLanguage() {
+                const languageSelect = document.getElementById('languageSelect');
+    
+                // Détecter la langue du navigateur
+                const browserLang = navigator.language.split('-')[0];
+                if (browserLang === 'en' || browserLang === 'fr') {
+                    this.currentLanguage = browserLang;
+                    languageSelect.value = browserLang;
+                }
+    
+                // Appliquer la langue initiale
+                this.updateLanguage();
+    
+                // Événement de changement de langue
+                languageSelect.addEventListener('change', (e) => {
+                    this.currentLanguage = e.target.value;
+                    this.updateLanguage();
+                });
+            }
+
+            updateLanguage() {
+                const t = this.TRANSLATIONS[this.currentLanguage];
+    
+                // Mettre à jour les éléments HTML
+                document.querySelector('h1').textContent = t.title;
+                document.querySelector('.file-label').textContent = t.loadMap;
+                document.getElementById('fullscreenBtn').textContent = t.fullscreen;
+                document.querySelector('.score').innerHTML = `${t.score} <span id="score">${this.game.score}</span>`;
+                document.querySelector('.lives').innerHTML = `${t.lives} <span id="lives">${this.game.lives}</span>`;
+                document.getElementById('sandboxBtn').textContent = this.gameState.sandboxMode ? t.sandboxActive : t.sandbox;
+                document.getElementById('editorBtn').textContent = t.editor;
+                document.querySelector('.controls-title').textContent = t.controls;
+                document.querySelector('.controls div:nth-child(2)').textContent = t.controlsText;
+                document.querySelector('.controls div:nth-child(3)').textContent = t.controlsText2;
+                document.querySelector('.end-btn.restart-btn').innerHTML = `🔄 ${t.restart}`;
+                document.querySelector('.end-btn.new-map-btn').innerHTML = `📁 ${t.newMap}`;
+    
+                // Mettre à jour mapInfo si pas de map chargée
+                if (!this.gameState.loaded) {
+                    document.getElementById('mapInfo').textContent = t.mapInfo;
+                }
+            }
+
+            t(key) {
+                return this.TRANSLATIONS[this.currentLanguage][key] || key;
+            }
+
+            
             
             setupControls() {
                 document.addEventListener('keydown', (e) => {
