@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎨 Pix'Adventure - Éditeur</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            font-family: 'Courier New', monospace;
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .editor-container {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #4a90e2;
+            box-shadow: 0 0 30px rgba(74, 144, 226, 0.3);
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #4a90e2;
+            text-shadow: 0 0 10px rgba(74, 144, 226, 0.5);
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(74, 144, 226, 0.1);
+            border-radius: 8px;
+            align-items: center;
+        }
+
+        .tool-group {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .tool-btn {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #4a90e2;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .tool-btn.active {
+            box-shadow: 0 0 15px rgba(74, 144, 226, 0.8);
+            transform: scale(1.1);
+        }
+
+        .tool-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .action-btn {
+            padding: 10px 15px;
+            background: linear-gradient(45deg, #4a90e2, #357abd);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(74, 144, 226, 0.4);
+        }
+
+        .game-btn {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            font-size: 16px;
+            padding: 12px 20px;
+            margin-right: 15px;
+        }
+
+        .game-btn:hover {
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+        }
+
+        .size-input {
+            width: 60px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #4a90e2;
+            border-radius: 5px;
+            color: white;
+            text-align: center;
+            font-family: inherit;
+        }
+
+        canvas {
+            border: 3px solid #4a90e2;
+            border-radius: 8px;
+            cursor: crosshair;
+            image-rendering: pixelated;
+            display: block;
+            margin: 0 auto;
+            background: white;
+        }
+
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border: 1px solid #666;
+            border-radius: 3px;
+        }
+
+        .info {
+            text-align: center;
+            margin-top: 15px;
+            color: #888;
+            font-size: 14px;
+        }
+
+        .export-section {
+            margin-top: 20px;
+            text-align: center;
+            padding: 15px;
+            background: rgba(74, 144, 226, 0.1);
+            border-radius: 8px;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .pulsing {
+            animation: pulse 1s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="editor-container">
+        <h1>🎨 Éditeur de Niveaux</h1>
+        
+        <div class="toolbar">
+            <div class="tool-group">
+                <a href="index.html" class="action-btn game-btn">🎮 JEU</a>
+            </div>
+            
+            <div class="tool-group">
+                <label>Taille:</label>
+                <input type="number" id="widthInput" class="size-input" value="32" min="10" max="100">
+                <span>x</span>
+                <input type="number" id="heightInput" class="size-input" value="24" min="10" max="100">
+                <button class="action-btn" onclick="editor.createCanvas()">📐 Créer</button>
+            </div>
+            
+            <div class="tool-group">
+                <div class="tool-btn active" data-tool="wall" style="background: black;" title="Mur">🧱</div>
+                <div class="tool-btn" data-tool="coin" style="background: gold;" title="Pièce">🪙</div>
+                <div class="tool-btn" data-tool="death" style="background: red;" title="Mort">💀</div>
+                <div class="tool-btn" data-tool="spawn" style="background: lime;" title="Spawn">🟢</div>
+                <div class="tool-btn" data-tool="finish" style="background: blue;" title="Arrivée">🏁</div>
+                <div class="tool-btn" data-tool="checkpoint" style="background: cyan;" title="Checkpoint">🚩</div>
+                <div class="tool-btn" data-tool="boost" style="background: magenta;" title="Boost">⚡</div>
+                <div class="tool-btn" data-tool="eraser" style="background: white;" title="Gomme">🧽</div>
+            </div>
+            
+            <div class="tool-group">
+                <button class="action-btn" onclick="editor.clear()">🗑️ Vider</button>
+                <button class="action-btn" onclick="editor.fill('wall')">⬛ Remplir</button>
+            </div>
+        </div>
+
+        <canvas id="editorCanvas"></canvas>
+
+        <div class="export-section">
+            <button class="action-btn" onclick="editor.download()" style="background: linear-gradient(45deg, #27ae60, #2ecc71);">
+                💾 Télécharger PNG
+            </button>
+            <button class="action-btn" onclick="editor.loadImage()" style="background: linear-gradient(45deg, #f39c12, #e67e22);">
+                📁 Charger Image
+            </button>
+            <input type="file" id="imageLoader" accept="image/*" style="display: none;">
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: black;"></div>
+                <span>🧱 Mur/Sol (Noir)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: gold;"></div>
+                <span>🪙 Pièce (Jaune)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: red;"></div>
+                <span>💀 Mort (Rouge)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: lime;"></div>
+                <span>🟢 Point de spawn (Vert)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: blue;"></div>
+                <span>🏁 Arrivée (Bleu)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: cyan;"></div>
+                <span>🚩 Checkpoint (Cyan)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: magenta;"></div>
+                <span>⚡ Boost de saut (Violet)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: white;"></div>
+                <span>🧽 Arrière-plan (Blanc)</span>
+            </div>
+        </div>
+
+        <div class="info">
+            💡 Cliquez pour placer, maintenez et glissez pour dessiner en continu
+            <br>
+            🖱️ Restez appuyé et bougez la souris pour placer plusieurs couleurs d'affilée
+        </div>
+    </div>
+
+    <script>
+        class LevelEditor {
+            constructor() {
+                this.canvas = document.getElementById('editorCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.imageLoader = document.getElementById('imageLoader');
+                
+                this.CELL_SIZE = 20;
+                this.width = 32;
+                this.height = 24;
+                
+                this.tools = {
+                    wall: [0, 0, 0],
+                    coin: [255, 255, 0],
+                    death: [255, 0, 0],
+                    spawn: [0, 255, 0],
+                    finish: [0, 0, 255],
+                    checkpoint: [0, 255, 255],
+                    boost: [255, 0, 255],
+                    eraser: [255, 255, 255]
+                };
+                
+                this.currentTool = 'wall';
+                this.isDrawing = false;
+                this.grid = [];
+                this.lastDrawnCell = { x: -1, y: -1 }; // Pour éviter de redessiner la même cellule
+                
+                this.init();
+            }
+            
+            init() {
+                this.setupEventListeners();
+                this.createCanvas();
+            }
+            
+            setupEventListeners() {
+                // Sélection d'outil
+                document.querySelectorAll('.tool-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelector('.tool-btn.active')?.classList.remove('active');
+                        btn.classList.add('active');
+                        this.currentTool = btn.dataset.tool;
+                    });
+                });
+                
+                // Dessin sur canvas - Souris
+                this.canvas.addEventListener('mousedown', (e) => {
+                    this.isDrawing = true;
+                    this.lastDrawnCell = { x: -1, y: -1 };
+                    this.draw(e);
+                    e.preventDefault();
+                });
+                
+                this.canvas.addEventListener('mousemove', (e) => {
+                    if (this.isDrawing) {
+                        this.draw(e);
+                    }
+                });
+                
+                this.canvas.addEventListener('mouseup', () => {
+                    this.isDrawing = false;
+                    this.lastDrawnCell = { x: -1, y: -1 };
+                });
+                
+                this.canvas.addEventListener('mouseleave', () => {
+                    this.isDrawing = false;
+                    this.lastDrawnCell = { x: -1, y: -1 };
+                });
+                
+                // Support tactile pour mobile
+                this.canvas.addEventListener('touchstart', (e) => {
+                    this.isDrawing = true;
+                    this.lastDrawnCell = { x: -1, y: -1 };
+                    const touch = e.touches[0];
+                    const mouseEvent = new MouseEvent('mousedown', {
+                        clientX: touch.clientX,
+                        clientY: touch.clientY
+                    });
+                    this.draw(mouseEvent);
+                    e.preventDefault();
+                });
+                
+                this.canvas.addEventListener('touchmove', (e) => {
+                    if (this.isDrawing) {
+                        const touch = e.touches[0];
+                        const mouseEvent = new MouseEvent('mousemove', {
+                            clientX: touch.clientX,
+                            clientY: touch.clientY
+                        });
+                        this.draw(mouseEvent);
+                    }
+                    e.preventDefault();
+                });
+                
+                this.canvas.addEventListener('touchend', () => {
+                    this.isDrawing = false;
+                    this.lastDrawnCell = { x: -1, y: -1 };
+                });
+                
+                // Empêcher le menu contextuel sur le canvas
+                this.canvas.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                });
+                
+                // Chargement d'image
+                this.imageLoader.addEventListener('change', (e) => {
+                    this.loadImageFile(e.target.files[0]);
+                });
+            }
+            
+            createCanvas() {
+                this.width = parseInt(document.getElementById('widthInput').value);
+                this.height = parseInt(document.getElementById('heightInput').value);
+                
+                this.canvas.width = this.width * this.CELL_SIZE;
+                this.canvas.height = this.height * this.CELL_SIZE;
+                
+                // Initialiser la grille avec du blanc
+                this.grid = Array(this.height).fill().map(() => 
+                    Array(this.width).fill([255, 255, 255])
+                );
+                
+                this.render();
+            }
+            
+            draw(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = Math.floor((e.clientX - rect.left) / this.CELL_SIZE);
+                const y = Math.floor((e.clientY - rect.top) / this.CELL_SIZE);
+                
+                // Vérifier si on est dans les limites et si on n'a pas déjà dessiné cette cellule
+                if (x >= 0 && x < this.width && y >= 0 && y < this.height) {
+                    // Éviter de redessiner la même cellule plusieurs fois
+                    if (this.lastDrawnCell.x !== x || this.lastDrawnCell.y !== y) {
+                        this.grid[y][x] = [...this.tools[this.currentTool]];
+                        this.lastDrawnCell = { x, y };
+                        this.renderCell(x, y);
+                    }
+                }
+            }
+            
+            renderCell(x, y) {
+                const color = this.grid[y][x];
+                this.ctx.fillStyle = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+                this.ctx.fillRect(x * this.CELL_SIZE, y * this.CELL_SIZE, this.CELL_SIZE, this.CELL_SIZE);
+                
+                // Grille
+                this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+                this.ctx.lineWidth = 1;
+                this.ctx.strokeRect(x * this.CELL_SIZE, y * this.CELL_SIZE, this.CELL_SIZE, this.CELL_SIZE);
+            }
+            
+            render() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                for (let y = 0; y < this.height; y++) {
+                    for (let x = 0; x < this.width; x++) {
+                        this.renderCell(x, y);
+                    }
+                }
+            }
+            
+            clear() {
+                this.grid = Array(this.height).fill().map(() => 
+                    Array(this.width).fill([255, 255, 255])
+                );
+                this.render();
+            }
+            
+            fill(tool) {
+                const color = this.tools[tool];
+                this.grid = Array(this.height).fill().map(() => 
+                    Array(this.width).fill([...color])
+                );
+                this.render();
+            }
+            
+            download() {
+                // Créer un canvas temporaire à la taille exacte
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCanvas.width = this.width;
+                tempCanvas.height = this.height;
+                
+                // Dessiner pixel par pixel
+                const imageData = tempCtx.createImageData(this.width, this.height);
+                
+                for (let y = 0; y < this.height; y++) {
+                    for (let x = 0; x < this.width; x++) {
+                        const pixelIndex = (y * this.width + x) * 4;
+                        const color = this.grid[y][x];
+                        
+                        imageData.data[pixelIndex] = color[0];     // R
+                        imageData.data[pixelIndex + 1] = color[1]; // G
+                        imageData.data[pixelIndex + 2] = color[2]; // B
+                        imageData.data[pixelIndex + 3] = 255;      // A
+                    }
+                }
+                
+                tempCtx.putImageData(imageData, 0, 0);
+                
+                // Télécharger
+                const link = document.createElement('a');
+                link.download = `level_${this.width}x${this.height}_${Date.now()}.png`;
+                link.href = tempCanvas.toDataURL();
+                link.click();
+            }
+            
+            loadImage() {
+                this.imageLoader.click();
+            }
+            
+            loadImageFile(file) {
+                if (!file) return;
+                
+                const img = new Image();
+                img.onload = () => {
+                    // Redimensionner la grille selon l'image
+                    this.width = img.width;
+                    this.height = img.height;
+                    
+                    document.getElementById('widthInput').value = this.width;
+                    document.getElementById('heightInput').value = this.height;
+                    
+                    this.canvas.width = this.width * this.CELL_SIZE;
+                    this.canvas.height = this.height * this.CELL_SIZE;
+                    
+                    // Extraire les couleurs de l'image
+                    const tempCanvas = document.createElement('canvas');
+                    const tempCtx = tempCanvas.getContext('2d');
+                    tempCanvas.width = img.width;
+                    tempCanvas.height = img.height;
+                    tempCtx.drawImage(img, 0, 0);
+                    
+                    const imageData = tempCtx.getImageData(0, 0, img.width, img.height);
+                    
+                    this.grid = [];
+                    for (let y = 0; y < this.height; y++) {
+                        this.grid[y] = [];
+                        for (let x = 0; x < this.width; x++) {
+                            const pixelIndex = (y * this.width + x) * 4;
+                            this.grid[y][x] = [
+                                imageData.data[pixelIndex],
+                                imageData.data[pixelIndex + 1],
+                                imageData.data[pixelIndex + 2]
+                            ];
+                        }
+                    }
+                    
+                    this.render();
+                };
+                
+                img.src = URL.createObjectURL(file);
+            }
+        }
+        
+        // Démarrage de l'éditeur
+        window.addEventListener('load', () => {
+            window.editor = new LevelEditor();
+        });
+    </script>
+</body>
+</html>
