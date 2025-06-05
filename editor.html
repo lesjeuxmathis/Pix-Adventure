@@ -32,12 +32,46 @@
             width: 100%;
         }
 
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
         h1 {
             color: #4a90e2;
             text-shadow: 0 0 10px rgba(74, 144, 226, 0.5);
             font-size: 2.5em;
-            margin-bottom: 20px;
             text-align: center;
+            flex-grow: 1;
+        }
+
+        .language-selector {
+            position: relative;
+            min-width: 120px;
+        }
+
+        .language-select {
+            background: rgba(74, 144, 226, 0.2);
+            border: 2px solid #4a90e2;
+            border-radius: 8px;
+            color: white;
+            padding: 8px 12px;
+            font-family: inherit;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .language-select:focus {
+            outline: none;
+            box-shadow: 0 0 10px rgba(74, 144, 226, 0.5);
+        }
+
+        .language-select option {
+            background: #1a1a2e;
+            color: white;
         }
 
         .toolbar {
@@ -178,23 +212,43 @@
         .pulsing {
             animation: pulse 1s infinite;
         }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="editor-container">
-        <h1>🎨 Éditeur de Niveaux</h1>
+        <div class="header">
+            <div></div>
+            <h1 id="pageTitle">🎨 Éditeur de Niveaux</h1>
+            <div class="language-selector">
+                <select id="languageSelect" class="language-select">
+                    <option value="fr">🇫🇷 Français</option>
+                    <option value="en">🇬🇧 English</option>
+                </select>
+            </div>
+        </div>
         
         <div class="toolbar">
             <div class="tool-group">
-                <a href="index.html" class="action-btn game-btn">🎮 JEU</a>
+                <a href="index.html" class="action-btn game-btn" id="gameBtn">🎮 JEU</a>
             </div>
             
             <div class="tool-group">
-                <label>Taille:</label>
+                <label id="sizeLabel">Taille:</label>
                 <input type="number" id="widthInput" class="size-input" value="32" min="10" max="100">
                 <span>x</span>
                 <input type="number" id="heightInput" class="size-input" value="24" min="10" max="100">
-                <button class="action-btn" onclick="editor.createCanvas()">📐 Créer</button>
+                <button class="action-btn" onclick="editor.createCanvas()" id="createBtn">📐 Créer</button>
             </div>
             
             <div class="tool-group">
@@ -209,18 +263,18 @@
             </div>
             
             <div class="tool-group">
-                <button class="action-btn" onclick="editor.clear()">🗑️ Vider</button>
-                <button class="action-btn" onclick="editor.fill('wall')">⬛ Remplir</button>
+                <button class="action-btn" onclick="editor.clear()" id="clearBtn">🗑️ Vider</button>
+                <button class="action-btn" onclick="editor.fill('wall')" id="fillBtn">⬛ Remplir</button>
             </div>
         </div>
 
         <canvas id="editorCanvas"></canvas>
 
         <div class="export-section">
-            <button class="action-btn" onclick="editor.download()" style="background: linear-gradient(45deg, #27ae60, #2ecc71);">
+            <button class="action-btn" onclick="editor.download()" style="background: linear-gradient(45deg, #27ae60, #2ecc71);" id="downloadBtn">
                 💾 Télécharger PNG
             </button>
-            <button class="action-btn" onclick="editor.loadImage()" style="background: linear-gradient(45deg, #f39c12, #e67e22);">
+            <button class="action-btn" onclick="editor.loadImage()" style="background: linear-gradient(45deg, #f39c12, #e67e22);" id="loadBtn">
                 📁 Charger Image
             </button>
             <input type="file" id="imageLoader" accept="image/*" style="display: none;">
@@ -229,46 +283,197 @@
         <div class="legend">
             <div class="legend-item">
                 <div class="legend-color" style="background: black;"></div>
-                <span>🧱 Mur/Sol (Noir)</span>
+                <span id="legendWall">🧱 Mur/Sol (Noir)</span>
             </div>
             <div class="legend-item">
                 <div class="legend-color" style="background: gold;"></div>
-                <span>🪙 Pièce (Jaune)</span>
+                <span id="legendCoin">🪙 Pièce (Jaune)</span>
             </div>
             <div class="legend-item">
                 <div class="legend-color" style="background: red;"></div>
-                <span>💀 Mort (Rouge)</span>
+                <span id="legendDeath">💀 Mort (Rouge)</span>
             </div>
             <div class="legend-item">
                 <div class="legend-color" style="background: lime;"></div>
-                <span>🟢 Point de spawn (Vert)</span>
+                <span id="legendSpawn">🟢 Point de spawn (Vert)</span>
             </div>
             <div class="legend-item">
                 <div class="legend-color" style="background: blue;"></div>
-                <span>🏁 Arrivée (Bleu)</span>
+                <span id="legendFinish">🏁 Arrivée (Bleu)</span>
             </div>
             <div class="legend-item">
                 <div class="legend-color" style="background: cyan;"></div>
-                <span>🚩 Checkpoint (Cyan)</span>
+                <span id="legendCheckpoint">🚩 Checkpoint (Cyan)</span>
             </div>
             <div class="legend-item">
                 <div class="legend-color" style="background: magenta;"></div>
-                <span>⚡ Boost de saut (Violet)</span>
+                <span id="legendBoost">⚡ Boost de saut (Violet)</span>
             </div>
             <div class="legend-item">
                 <div class="legend-color" style="background: white;"></div>
-                <span>🧽 Arrière-plan (Blanc)</span>
+                <span id="legendEraser">🧽 Arrière-plan (Blanc)</span>
             </div>
         </div>
 
         <div class="info">
-            💡 Cliquez pour placer, maintenez et glissez pour dessiner en continu
-            <br>
-            🖱️ Restez appuyé et bougez la souris pour placer plusieurs couleurs d'affilée
+            <div id="infoText">
+                💡 Cliquez pour placer, maintenez et glissez pour dessiner en continu
+                <br>
+                🖱️ Restez appuyé et bougez la souris pour placer plusieurs couleurs d'affilée
+            </div>
         </div>
     </div>
 
     <script>
+        // Système de traduction
+        const translations = {
+            fr: {
+                pageTitle: "🎨 Éditeur de Niveaux",
+                gameBtn: "🎮 JEU",
+                sizeLabel: "Taille:",
+                createBtn: "📐 Créer",
+                clearBtn: "🗑️ Vider",
+                fillBtn: "⬛ Remplir",
+                downloadBtn: "💾 Télécharger PNG",
+                loadBtn: "📁 Charger Image",
+                legendWall: "🧱 Mur/Sol (Noir)",
+                legendCoin: "🪙 Pièce (Jaune)",
+                legendDeath: "💀 Mort (Rouge)",
+                legendSpawn: "🟢 Point de spawn (Vert)",
+                legendFinish: "🏁 Arrivée (Bleu)",
+                legendCheckpoint: "🚩 Checkpoint (Cyan)",
+                legendBoost: "⚡ Boost de saut (Violet)",
+                legendEraser: "🧽 Arrière-plan (Blanc)",
+                infoText: "💡 Cliquez pour placer, maintenez et glissez pour dessiner en continu<br>🖱️ Restez appuyé et bougez la souris pour placer plusieurs couleurs d'affilée",
+                tooltips: {
+                    wall: "Mur",
+                    coin: "Pièce",
+                    death: "Mort",
+                    spawn: "Spawn",
+                    finish: "Arrivée",
+                    checkpoint: "Checkpoint",
+                    boost: "Boost",
+                    eraser: "Gomme"
+                }
+            },
+            en: {
+                pageTitle: "🎨 Level Editor",
+                gameBtn: "🎮 GAME",
+                sizeLabel: "Size:",
+                createBtn: "📐 Create",
+                clearBtn: "🗑️ Clear",
+                fillBtn: "⬛ Fill",
+                downloadBtn: "💾 Download PNG",
+                loadBtn: "📁 Load Image",
+                legendWall: "🧱 Wall/Ground (Black)",
+                legendCoin: "🪙 Coin (Yellow)",
+                legendDeath: "💀 Death (Red)",
+                legendSpawn: "🟢 Spawn point (Green)",
+                legendFinish: "🏁 Finish (Blue)",
+                legendCheckpoint: "🚩 Checkpoint (Cyan)",
+                legendBoost: "⚡ Jump boost (Purple)",
+                legendEraser: "🧽 Background (White)",
+                infoText: "💡 Click to place, hold and drag to draw continuously<br>🖱️ Hold down and move mouse to place multiple colors in a row",
+                tooltips: {
+                    wall: "Wall",
+                    coin: "Coin",
+                    death: "Death",
+                    spawn: "Spawn",
+                    finish: "Finish",
+                    checkpoint: "Checkpoint",
+                    boost: "Boost",
+                    eraser: "Eraser"
+                }
+            }
+        };
+
+        class LanguageManager {
+            constructor() {
+                this.currentLanguage = this.detectLanguage();
+                this.init();
+            }
+
+            detectLanguage() {
+                // Vérifier si une langue est sauvegardée
+                const savedLang = localStorage.getItem('pixadventure-language');
+                if (savedLang && translations[savedLang]) {
+                    return savedLang;
+                }
+
+                // Détecter la langue du navigateur
+                const browserLang = navigator.language || navigator.userLanguage;
+                if (browserLang.startsWith('fr')) {
+                    return 'fr';
+                } else if (browserLang.startsWith('en')) {
+                    return 'en';
+                }
+
+                // Langue par défaut
+                return 'fr';
+            }
+
+            init() {
+                const languageSelect = document.getElementById('languageSelect');
+                languageSelect.value = this.currentLanguage;
+                
+                languageSelect.addEventListener('change', (e) => {
+                    this.setLanguage(e.target.value);
+                });
+
+                this.updateUI();
+            }
+
+            setLanguage(lang) {
+                if (translations[lang]) {
+                    this.currentLanguage = lang;
+                    localStorage.setItem('pixadventure-language', lang);
+                    this.updateUI();
+                }
+            }
+
+            updateUI() {
+                const t = translations[this.currentLanguage];
+                
+                // Mettre à jour les éléments de l'interface
+                document.getElementById('pageTitle').textContent = t.pageTitle;
+                document.getElementById('gameBtn').textContent = t.gameBtn;
+                document.getElementById('sizeLabel').textContent = t.sizeLabel;
+                document.getElementById('createBtn').textContent = t.createBtn;
+                document.getElementById('clearBtn').textContent = t.clearBtn;
+                document.getElementById('fillBtn').textContent = t.fillBtn;
+                document.getElementById('downloadBtn').textContent = t.downloadBtn;
+                document.getElementById('loadBtn').textContent = t.loadBtn;
+                
+                // Légende
+                document.getElementById('legendWall').textContent = t.legendWall;
+                document.getElementById('legendCoin').textContent = t.legendCoin;
+                document.getElementById('legendDeath').textContent = t.legendDeath;
+                document.getElementById('legendSpawn').textContent = t.legendSpawn;
+                document.getElementById('legendFinish').textContent = t.legendFinish;
+                document.getElementById('legendCheckpoint').textContent = t.legendCheckpoint;
+                document.getElementById('legendBoost').textContent = t.legendBoost;
+                document.getElementById('legendEraser').textContent = t.legendEraser;
+                
+                // Texte d'information
+                document.getElementById('infoText').innerHTML = t.infoText;
+                
+                // Tooltips des outils
+                document.querySelectorAll('.tool-btn').forEach(btn => {
+                    const tool = btn.dataset.tool;
+                    if (tool && t.tooltips[tool]) {
+                        btn.title = t.tooltips[tool];
+                    }
+                });
+
+                // Mettre à jour la langue du document
+                document.documentElement.lang = this.currentLanguage;
+            }
+
+            getText(key) {
+                return translations[this.currentLanguage][key] || key;
+            }
+        }
+
         class LevelEditor {
             constructor() {
                 this.canvas = document.getElementById('editorCanvas');
@@ -293,7 +498,7 @@
                 this.currentTool = 'wall';
                 this.isDrawing = false;
                 this.grid = [];
-                this.lastDrawnCell = { x: -1, y: -1 }; // Pour éviter de redessiner la même cellule
+                this.lastDrawnCell = { x: -1, y: -1 };
                 
                 this.init();
             }
@@ -524,8 +729,9 @@
             }
         }
         
-        // Démarrage de l'éditeur
+        // Démarrage de l'application
         window.addEventListener('load', () => {
+            window.languageManager = new LanguageManager();
             window.editor = new LevelEditor();
         });
     </script>
