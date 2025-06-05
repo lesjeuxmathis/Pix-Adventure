@@ -342,6 +342,7 @@
           <div class="ui-controls">
                 <input type="color" id="skinColorPicker" value="#ff6b6b" title="Couleur du skin">
                <button id="sandboxBtn" class="sandbox-btn">🏖️ Bac à sable</button>
+              <button id="editorBtn" class="sandbox-btn">🎨 Éditeur</button>
         </div>
     <div class="ui-item message" id="gameMessage"></div>
     <div class="ui-item lives">❤️ Vies: <span id="lives">3</span></div>
@@ -440,6 +441,7 @@
                 this.setupFullscreen();
                 this.setupSkinColorPicker();
                 this.setupSandboxMode();
+                this.setupEditor();
                 this.showMessage("Chargez une map pour commencer l'aventure !");
                 this.gameLoop();
             }
@@ -509,6 +511,14 @@
            }
 
 
+            setupEditor() {
+                const editorBtn = document.getElementById('editorBtn');
+                editorBtn.addEventListener('click', () => {
+                    window.open('editor.html', '_blank');
+                });
+            }
+
+            
             setupControls() {
                 document.addEventListener('keydown', (e) => {
                     this.keys[e.key.toLowerCase()] = true;
