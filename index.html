@@ -3,15 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎮 Pix’Adventure 🎨</title>
+    <title>🎮 Pix'Adventure 🎨</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
-
 
         .end-screen {
             position: fixed;
@@ -91,8 +89,6 @@
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         }
 
-
-
         .ui-controls {
             display: flex;
             gap: 10px;
@@ -129,7 +125,6 @@
         .sandbox-btn.active {
             background: linear-gradient(45deg, #27ae60, #2ecc71);
         }
-
 
         body {
             background: linear-gradient(135deg, #1a1a2e, #16213e);
@@ -236,7 +231,7 @@
             margin-bottom: 5px;
         }
 
-                .fullscreen-btn {
+        .fullscreen-btn {
             position: absolute;
             top: 20px;
             right: 20px;
@@ -277,7 +272,6 @@
             max-height: 70vh;
         }
 
-
         .debug-info {
             position: absolute;
             top: 10px;
@@ -305,8 +299,9 @@
         .pulsing {
             animation: pulse 1s infinite;
         }
+
         .language-selector {
-             position: absolute;
+            position: absolute;
             top: 20px;
             left: 20px;
             z-index: 1000;
@@ -320,18 +315,18 @@
             padding: 8px 12px;
             font-family: 'Courier New', monospace;
             font-size: 12px;
-    cursor: pointer;
-        }        
+            cursor: pointer;
+        }
 
-.language-select option {
-    background: #1a1a2e;
-    color: white;
-}
+        .language-select option {
+            background: #1a1a2e;
+            color: white;
+        }
     </style>
 </head>
 <body>
     <div class="game-container">
-         <button id="fullscreenBtn" class="fullscreen-btn">🔳 Plein Écran</button>
+        <button id="fullscreenBtn" class="fullscreen-btn">🔳 Plein Écran</button>
         <div class="language-selector">
             <select id="languageSelect" class="language-select">
                 <option value="fr">🇫🇷 Français</option>
@@ -339,7 +334,7 @@
             </select>
         </div>
         <div class="header">
-            <h1>🎮 Pix’Adventure</h1>
+            <h1>🎮 Pix'Adventure</h1>
             <div class="map-info" id="mapInfo">Chargez une image de map pour commencer</div>
         </div>
         <div class="file-input-container">
@@ -347,34 +342,33 @@
             <label for="mapFile" class="file-label">📁 Charger une Map</label>
         </div>
 
-
         <div id="endScreen" class="end-screen">
-        <div class="end-content">
-            <div class="end-title">🎉 VICTOIRE ! 🎉</div>
-            <div class="end-stats" id="endStats"></div>
-            <div class="end-buttons">
-                <button class="end-btn restart-btn" onclick="game.restartFromEndScreen()">
-                🔄 Rejouer
-                </button>
-                <button class="end-btn new-map-btn" onclick="game.loadNewMap()">
-                📁 Nouvelle Map
-                </button>
+            <div class="end-content">
+                <div class="end-title">🎉 VICTOIRE ! 🎉</div>
+                <div class="end-stats" id="endStats"></div>
+                <div class="end-buttons">
+                    <button class="end-btn restart-btn" onclick="game.restartFromEndScreen()">
+                        🔄 Rejouer
+                    </button>
+                    <button class="end-btn new-map-btn" onclick="game.loadNewMap()">
+                        📁 Nouvelle Map
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
 
         <canvas id="gameCanvas" width="800" height="600"></canvas>
 
         <div class="ui-panel">
-          <div class="ui-item score">💰 Score: <span id="score">0</span></div>
-          <div class="ui-controls">
+            <div class="ui-item score">💰 Score: <span id="score">0</span></div>
+            <div class="ui-controls">
                 <input type="color" id="skinColorPicker" value="#ff6b6b" title="Couleur du skin">
-               <button id="sandboxBtn" class="sandbox-btn">🏖️ Bac à sable</button>
-              <button id="editorBtn" class="sandbox-btn">🎨 Éditeur</button>
+                <button id="sandboxBtn" class="sandbox-btn">🖌️ Bac à sable</button>
+                <button id="editorBtn" class="sandbox-btn">🎨 Éditeur</button>
+            </div>
+            <div class="ui-item message" id="gameMessage"></div>
+            <div class="ui-item lives">❤️ Vies: <span id="lives">3</span></div>
         </div>
-    <div class="ui-item message" id="gameMessage"></div>
-    <div class="ui-item lives">❤️ Vies: <span id="lives">3</span></div>
-</div>
 
         <div class="controls">
             <div class="controls-title">🎯 CONTRÔLES</div>
@@ -392,108 +386,40 @@
                 this.ctx = this.canvas.getContext('2d');
                 this.fileInput = document.getElementById('mapFile');
                 
-                // Configuration
                 this.ZOOM = 20;
                 this.GRAVITY = 0.5;
                 this.JUMP_FORCE = -8;
                 this.MOVE_SPEED = 3;
                 this.MAX_FALL_SPEED = 15;
                 
-                // Couleurs de la map avec tolérance améliorée
                 this.COLORS = {
-                    BLACK: [0, 0, 0],        // Mur/Sol
-                    YELLOW: [255, 255, 0],   // Pièce
-                    RED: [255, 0, 0],        // Mort/Reset
-                    GREEN: [0, 255, 0],      // Point d'apparition
-                    BLUE: [0, 0, 255],       // Fin du niveau
-                    CYAN: [0, 255, 255],     // Checkpoint
-                    VIOLET: [255, 0, 255],   // Boost de saut
-                    WHITE: [255, 255, 255]   // Arrière-plan
+                    BLACK: [0, 0, 0],
+                    YELLOW: [255, 255, 0],
+                    RED: [255, 0, 0],
+                    GREEN: [0, 255, 0],
+                    BLUE: [0, 0, 255],
+                    CYAN: [0, 255, 255],
+                    VIOLET: [255, 0, 255],
+                    WHITE: [255, 255, 255],
+                    ORANGE: [255, 165, 0],
+                    GRAY: [128, 128, 128]
                 };
 
-                // Système de traduction
                 this.TRANSLATIONS = {
                     fr: {
-                        title: "🎮 Pix'Adventure 🎨",
-                        loadMap: "📁 Charger une Map",
-                        mapInfo: "Chargez une image de map pour commencer",
-                        fullscreen: "🔳 Plein Écran",
-                        exitFullscreen: "🔲 Quitter",
-                        score: "💰 Score:",
-                        lives: "❤️ Vies:",
-                        sandbox: "🏖️ Bac à sable",
-                        sandboxActive: "🏖️ Mode Normal",
-                        editor: "🎨 Éditeur",
-                        controls: "🎯 CONTRÔLES",
-                        controlsText: "← → ou A D : Déplacement | ↑ ou W ou ESPACE : Saut",
-                        controlsText2: "F12 : Mode Debug | R : Redémarrer niveau",
-                        mapLoaded: "Map chargée ! Bonne chance !",
-                        loadError: "Erreur lors du chargement de la map !",
-                        startMessage: "Chargez une map pour commencer l'aventure !",
-                        victory: "🎉 VICTOIRE ! 🎉",
-                        restart: "🔄 Rejouer",
-                        newMap: "📁 Nouvelle Map",
-                        gameOver: "💀 GAME OVER ! Appuyez sur R pour recommencer",
-                        respawn: "💀 Respawn !",
-                        checkpoint: "🏁 Checkpoint activé !",
-                        jumpBoost: "⚡ Boost de saut activé !",
-                        sandboxActivated: "🏖️ Mode Bac à Sable activé - Vies infinies !",
-                        normalMode: "🎮 Mode Normal activé",
-                        levelRestarted: "🔄 Niveau redémarré !",
-                        welcomeTitle: "🎮 Pix'Adventure",
-                        welcomeText: "Chargez une image de map pour commencer",
-                        mapColors1: "Map basée sur les couleurs : Noir=Mur, Jaune=Pièce, Rouge=Mort",
-                        mapColors2: "Vert=Spawn, Bleu=Fin, Cyan=Checkpoint, Violet=Boost",
-                        finalScore: "💰 Score Final:",
-                        coins: "🪙 Pièces:",
-                        livesLeft: "❤️ Vies Restantes:",
-                        mode: "🎮 Mode:",
-                        perfect: "⭐ PARFAIT ! Toutes les pièces collectées !",
-                        normal: "🎯 Normal"
+                        leverActivated: "🔶 Levier activé ! Blocs gris désactivés !",
+                        leverDeactivated: "🔶 Levier désactivé ! Blocs gris réactivés !",
+                        mapColors2: "Vert=Spawn, Bleu=Fin, Cyan=Checkpoint, Violet=Boost, Orange=Levier, Gris=Désactivable"
                     },
                     en: {
-                        title: "🎮 Pix'Adventure 🎨",
-                        loadMap: "📁 Load Map",
-                        mapInfo: "Load a map image to start",
-                        fullscreen: "🔳 Fullscreen",
-                        exitFullscreen: "🔲 Exit",
-                        score: "💰 Score:",
-                        lives: "❤️ Lives:",
-                        sandbox: "🏖️ Sandbox",
-                        sandboxActive: "🏖️ Normal Mode",
-                        editor: "🎨 Editor",
-                        controls: "🎯 CONTROLS",
-                        controlsText: "← → or A D: Move | ↑ or W or SPACE: Jump",
-                        controlsText2: "F12: Debug Mode | R: Restart level",
-                        mapLoaded: "Map loaded! Good luck!",
-                        loadError: "Error loading the map!",
-                        startMessage: "Load a map to start the adventure!",
-                        victory: "🎉 VICTORY! 🎉",
-                        restart: "🔄 Play Again",
-                        newMap: "📁 New Map",
-                        gameOver: "💀 GAME OVER! Press R to restart",
-                        respawn: "💀 Respawn!",
-                        checkpoint: "🏁 Checkpoint activated!",
-                        jumpBoost: "⚡ Jump boost activated!",
-                        sandboxActivated: "🏖️ Sandbox Mode activated - Infinite lives!",
-                        normalMode: "🎮 Normal Mode activated",
-                        levelRestarted: "🔄 Level restarted!",
-                        welcomeTitle: "🎮 Pix'Adventure",
-                        welcomeText: "Load a map image to start",
-                        mapColors1: "Color-based map: Black=Wall, Yellow=Coin, Red=Death",
-                        mapColors2: "Green=Spawn, Blue=End, Cyan=Checkpoint, Purple=Boost",
-                        finalScore: "💰 Final Score:",
-                        coins: "🪙 Coins:",
-                        livesLeft: "❤️ Lives Left:",
-                        mode: "🎮 Mode:",
-                        perfect: "⭐ PERFECT! All coins collected!",
-                        normal: "🎯 Normal"
-    }
-};
+                        leverActivated: "🔶 Lever activated! Gray blocks disabled!",
+                        leverDeactivated: "🔶 Lever deactivated! Gray blocks reactivated!",
+                        mapColors2: "Green=Spawn, Blue=End, Cyan=Checkpoint, Purple=Boost, Orange=Lever, Gray=Deactivatable"
+                    }
+                };
 
                 this.currentLanguage = 'fr';
                 
-                // État du jeu
                 this.gameState = {
                     loaded: false,
                     paused: false,
@@ -503,7 +429,6 @@
                     sandboxMode: false
                 };
                 
-                // Map
                 this.map = {
                     data: null,
                     width: 0,
@@ -511,7 +436,6 @@
                     image: null
                 };
                 
-                // Joueur
                 this.player = {
                     x: 100,
                     y: 100,
@@ -525,21 +449,19 @@
                     trail: []
                 };
                 
-                // Jeu
                 this.game = {
                     score: 0,
                     lives: 3,
                     coins: [],
                     checkpoints: [],
                     lastCheckpoint: null,
-                    camera: { x: 0, y: 0 }
+                    camera: { x: 0, y: 0 },
+                    levers: [],
+                    grayBlocksDisabled: false
                 };
                 
-                // Contrôles
                 this.keys = {};
                 this.keysPressed = {};
-                
-                // Particules
                 this.particles = [];
                 
                 this.init();
@@ -553,35 +475,64 @@
                 this.setupSandboxMode();
                 this.setupEditor();
                 this.setupLanguage();
-                this.showMessage("Chargez une map pour commencer l'aventure !");
+                this.showMessage("Chargement de la map par défaut...");
+                this.loadDefaultMap();
                 this.gameLoop();
             }
             
-                        setupFullscreen() {
+            async loadDefaultMap() {
+                try {
+                    const response = await fetch('Exemple/map.png');
+                    if (!response.ok) {
+                        this.showMessage("Chargez une map pour commencer l'aventure !");
+                        return;
+                    }
+                    
+                    const blob = await response.blob();
+                    const img = await this.loadImageFromBlob(blob);
+                    await this.processMapImage(img);
+                    this.initializeLevel();
+                    this.gameState.loaded = true;
+                    this.showMessage("Map par défaut chargée ! Bonne chance !");
+                    
+                    document.getElementById('mapInfo').textContent = 
+                        `Map: ${this.map.width}x${this.map.height} pixels`;
+                } catch (error) {
+                    console.log('Map par défaut non trouvée, en attente de chargement manuel');
+                    this.showMessage("Chargez une map pour commencer l'aventure !");
+                }
+            }
+            
+            loadImageFromBlob(blob) {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        URL.revokeObjectURL(img.src);
+                        resolve(img);
+                    };
+                    img.onerror = reject;
+                    img.src = URL.createObjectURL(blob);
+                });
+            }
+            
+            setupFullscreen() {
                 const fullscreenBtn = document.getElementById('fullscreenBtn');
                 const gameContainer = document.querySelector('.game-container');
                 
                 fullscreenBtn.addEventListener('click', () => {
                     if (!gameContainer.classList.contains('fullscreen')) {
-                        // Entrer en plein écran
                         gameContainer.classList.add('fullscreen');
                         fullscreenBtn.textContent = '🔲 Quitter';
-                        
-                        // Redimensionner le canvas
                         this.canvas.width = Math.min(window.innerWidth * 0.9, 1200);
                         this.canvas.height = Math.min(window.innerHeight * 0.7, 800);
                     } else {
-                        // Sortir du plein écran
                         gameContainer.classList.remove('fullscreen');
                         fullscreenBtn.textContent = '🔳 Plein Écran';
-                        
-                        // Restaurer la taille originale
                         this.canvas.width = 800;
                         this.canvas.height = 600;
                     }
                 });
                 
-                // Gérer la touche Échap pour sortir du plein écran
                 document.addEventListener('keydown', (e) => {
                     if (e.key === 'Escape' && gameContainer.classList.contains('fullscreen')) {
                         gameContainer.classList.remove('fullscreen');
@@ -594,33 +545,32 @@
 
             setupSkinColorPicker() {
                 const colorPicker = document.getElementById('skinColorPicker');
-               colorPicker.addEventListener('change', (e) => {
-                  this.player.color = e.target.value;
-               });
+                colorPicker.addEventListener('change', (e) => {
+                    this.player.color = e.target.value;
+                });
             }
 
             setupSandboxMode() {
                 const sandboxBtn = document.getElementById('sandboxBtn');
-              sandboxBtn.addEventListener('click', () => {
-                  this.gameState.sandboxMode = !this.gameState.sandboxMode;
-        
-                 if (this.gameState.sandboxMode) {
-                    sandboxBtn.textContent = '🏖️ Mode Normal';
-                    sandboxBtn.classList.add('active');
-                    this.game.lives = 999;
-                    this.showMessage('🏖️ Mode Bac à Sable activé - Vies infinies !');
-                } else {
-                   sandboxBtn.textContent = '🏖️ Bac à sable';
-                   sandboxBtn.classList.remove('active');
-                   this.game.lives = 4;
-                   this.playerDeath();
-                   this.showMessage('🎮 Mode Normal activé');
-                }
-        
-                this.updateUI();
-               });
-           }
-
+                sandboxBtn.addEventListener('click', () => {
+                    this.gameState.sandboxMode = !this.gameState.sandboxMode;
+                    
+                    if (this.gameState.sandboxMode) {
+                        sandboxBtn.textContent = '🖌️ Mode Normal';
+                        sandboxBtn.classList.add('active');
+                        this.game.lives = 999;
+                        this.showMessage('🖌️ Mode Bac à Sable activé - Vies infinies !');
+                    } else {
+                        sandboxBtn.textContent = '🖌️ Bac à sable';
+                        sandboxBtn.classList.remove('active');
+                        this.game.lives = 4;
+                        this.playerDeath();
+                        this.showMessage('🎮 Mode Normal activé');
+                    }
+                    
+                    this.updateUI();
+                });
+            }
 
             setupEditor() {
                 const editorBtn = document.getElementById('editorBtn');
@@ -631,74 +581,38 @@
 
             setupLanguage() {
                 const languageSelect = document.getElementById('languageSelect');
-    
-                // Détecter la langue du navigateur
                 const browserLang = navigator.language.split('-')[0];
                 if (browserLang === 'en' || browserLang === 'fr') {
                     this.currentLanguage = browserLang;
                     languageSelect.value = browserLang;
                 }
-    
-                // Appliquer la langue initiale
-                this.updateLanguage();
-    
-                // Événement de changement de langue
+                
                 languageSelect.addEventListener('change', (e) => {
                     this.currentLanguage = e.target.value;
-                    this.updateLanguage();
                 });
-            }
-
-            updateLanguage() {
-                const t = this.TRANSLATIONS[this.currentLanguage];
-    
-                // Mettre à jour les éléments HTML
-                document.querySelector('h1').textContent = t.title;
-                document.querySelector('.file-label').textContent = t.loadMap;
-                document.getElementById('fullscreenBtn').textContent = t.fullscreen;
-                document.querySelector('.score').innerHTML = `${t.score} <span id="score">${this.game.score}</span>`;
-                document.querySelector('.lives').innerHTML = `${t.lives} <span id="lives">${this.game.lives}</span>`;
-                document.getElementById('sandboxBtn').textContent = this.gameState.sandboxMode ? t.sandboxActive : t.sandbox;
-                document.getElementById('editorBtn').textContent = t.editor;
-                document.querySelector('.controls-title').textContent = t.controls;
-                document.querySelector('.controls div:nth-child(2)').textContent = t.controlsText;
-                document.querySelector('.controls div:nth-child(3)').textContent = t.controlsText2;
-                document.querySelector('.end-btn.restart-btn').innerHTML = `🔄 ${t.restart}`;
-                document.querySelector('.end-btn.new-map-btn').innerHTML = `📁 ${t.newMap}`;
-    
-                // Mettre à jour mapInfo si pas de map chargée
-                if (!this.gameState.loaded) {
-                    document.getElementById('mapInfo').textContent = t.mapInfo;
-                }
             }
 
             t(key) {
                 return this.TRANSLATIONS[this.currentLanguage][key] || key;
             }
-
-            
             
             setupControls() {
                 document.addEventListener('keydown', (e) => {
                     this.keys[e.key.toLowerCase()] = true;
                     this.keysPressed[e.key.toLowerCase()] = true;
                     
-                    // Empêcher le défilement avec les touches de jeu
                     if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'ArrowDown' || 
                         e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
                         e.preventDefault();
                     }
 
-
-                    // Toggle debug mode avec F12
                     if (e.key === 'F12') {
                         e.preventDefault();
                         this.toggleDebug();
                     }
 
-
                     if (e.key.toLowerCase() === 'r' && this.gameState.loaded) {
-                        this.playerDeath();
+                        this.restartLevel();
                     }
                 });
                 
@@ -761,7 +675,6 @@
                         const key = `${color[0]},${color[1]},${color[2]}`;
                         colors[key] = (colors[key] || 0) + 1;
                         
-                        // Chercher le point de spawn
                         if (this.colorMatches(color, this.COLORS.GREEN) && !spawnFound) {
                             this.player.x = x * this.ZOOM;
                             this.player.y = y * this.ZOOM;
@@ -779,16 +692,16 @@
             }
             
             initializeLevel() {
-                // Reset du jeu
                 this.game.coins = [];
                 this.game.checkpoints = [];
+                this.game.levers = [];
+                this.game.grayBlocksDisabled = false;
                 this.game.score = 0;
                 this.game.lives = 3;
                 this.particles = [];
                 this.gameState.gameOver = false;
                 this.gameState.levelComplete = false;
                 
-                // Scan des éléments spéciaux
                 for (let y = 0; y < this.map.height; y++) {
                     for (let x = 0; x < this.map.width; x++) {
                         const color = this.getPixelColor(x, y);
@@ -807,6 +720,13 @@
                                 x: x * this.ZOOM,
                                 y: y * this.ZOOM,
                                 activated: false
+                            });
+                        } else if (this.colorMatches(color, this.COLORS.ORANGE)) {
+                            this.game.levers.push({
+                                x: x * this.ZOOM,
+                                y: y * this.ZOOM,
+                                activated: false,
+                                pulse: 0
                             });
                         }
                     }
@@ -844,37 +764,32 @@
                 this.updateParticles();
                 this.checkCollectibles();
                 this.checkSpecialTiles();
+                this.updateLevers();
                 
-                // Reset des touches pressées
                 this.keysPressed = {};
             }
             
             updatePlayer() {
                 const wasOnGround = this.player.onGround;
                 
-                // Mouvement horizontal
                 if (this.keys['arrowleft'] || this.keys['d']) {
                     this.player.vx = -this.MOVE_SPEED;
                 } else if (this.keys['arrowright'] || this.keys['q']) {
                     this.player.vx = this.MOVE_SPEED;
                 } else {
-                    this.player.vx *= 0.8; // Friction
+                    this.player.vx *= 0.8;
                 }
                 
-                // Saut
                 if ((this.keys[' '] || this.keys['arrowup'] || this.keys['z']) && this.player.onGround) {
                     this.player.vy = this.JUMP_FORCE - this.player.jumpBoost;
                     this.player.jumpBoost = 0;
                     this.player.onGround = false;
                     this.addParticles(this.player.x + this.player.width/2, this.player.y + this.player.height, 5, this.player.color);
-                    this.addParticles(this.player.x + this.player.width/2, this.player.y + this.player.height, 3, this.player.color);
                 }
                 
-                // Gravité
                 this.player.vy += this.GRAVITY;
                 this.player.vy = Math.min(this.player.vy, this.MAX_FALL_SPEED);
                 
-                // Collision horizontale
                 const newX = this.player.x + this.player.vx;
                 if (!this.checkCollision(newX, this.player.y, this.player.width, this.player.height)) {
                     this.player.x = newX;
@@ -882,7 +797,6 @@
                     this.player.vx = 0;
                 }
                 
-                // Collision verticale
                 const newY = this.player.y + this.player.vy;
                 if (!this.checkCollision(this.player.x, newY, this.player.width, this.player.height)) {
                     this.player.y = newY;
@@ -897,7 +811,6 @@
                     this.player.vy = 0;
                 }
                 
-                // Trail du joueur
                 this.player.trail.push({
                     x: this.player.x + this.player.width/2,
                     y: this.player.y + this.player.height/2,
@@ -908,22 +821,33 @@
             }
             
             checkCollision(x, y, width, height) {
-            const x1 = Math.floor(x / this.ZOOM);
-            const y1 = Math.floor(y / this.ZOOM);
-            const x2 = Math.floor((x + width - 1) / this.ZOOM);
-            const y2 = Math.floor((y + height - 1) / this.ZOOM);
-             
-            for (let my = y1; my <= y2; my++) {
-                for (let mx = x1; mx <= x2; mx++) {
-                    const color = this.getPixelColor(mx, my);
-                // SEULS les blocs NOIRS et violet sont solides maintenant
-                if (this.colorMatches(color, this.COLORS.BLACK) || this.colorMatches(color, this.COLORS.VIOLET)) {
-                   return true;
-               }
-        }
-    }
-    return false;
-}  
+                const x1 = Math.floor(x / this.ZOOM);
+                const y1 = Math.floor(y / this.ZOOM);
+                const x2 = Math.floor((x + width - 1) / this.ZOOM);
+                const y2 = Math.floor((y + height - 1) / this.ZOOM);
+                
+                for (let my = y1; my <= y2; my++) {
+                    for (let mx = x1; mx <= x2; mx++) {
+                        const color = this.getPixelColor(mx, my);
+                        
+                        if (this.colorMatches(color, this.COLORS.BLACK) || 
+                            this.colorMatches(color, this.COLORS.VIOLET)) {
+                            return true;
+                        }
+                        
+                        if (this.colorMatches(color, this.COLORS.GRAY) && !this.game.grayBlocksDisabled) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+            
+            updateLevers() {
+                this.game.levers.forEach(lever => {
+                    lever.pulse += 0.05;
+                });
+            }
             
             checkSpecialTiles() {
                 const centerX = Math.floor((this.player.x + this.player.width / 2) / this.ZOOM);
@@ -933,525 +857,40 @@
                 const currentColor = this.getPixelColor(centerX, centerY);
                 const groundColor = this.getPixelColor(centerX, bottomY);
                 
-                // Mort (rouge)
                 if (this.colorMatches(currentColor, this.COLORS.RED)) {
                     this.playerDeath();
                     return;
                 }
                 
-                // Fin du niveau (bleu)
                 if (this.colorMatches(currentColor, this.COLORS.BLUE)) {
                     this.levelComplete();
                     return;
                 }
                 
-                // Boost de saut (violet) - détection améliorée
                 if (this.colorMatches(currentColor, this.COLORS.VIOLET) || 
                     this.colorMatches(groundColor, this.COLORS.VIOLET)) {
                     this.player.jumpBoost = 5;
                     this.addParticles(this.player.x + this.player.width/2, this.player.y + this.player.height, 3, '#ff00ff');
                     this.showMessage('⚡ Boost de saut activé !', 1000);
-}
-            }
-            
-            checkCollectibles() {
-                // Pièces
-                this.game.coins.forEach(coin => {
-                    if (!coin.collected) {
-                        const dx = this.player.x + this.player.width/2 - coin.x;
-                        const dy = this.player.y + this.player.height/2 - coin.y;
-                        const distance = Math.sqrt(dx*dx + dy*dy);
-                        
-                        if (distance < this.ZOOM * 0.6) {
-                            coin.collected = true;
-                            this.game.score += 100;
-                            this.addParticles(coin.x, coin.y, 10, '#ffd700');
-                            this.updateUI();
-                        }
-                        
-                        coin.pulse += 0.1;
-                    }
-                });
-                
-                // Checkpoints
-                this.game.checkpoints.forEach(checkpoint => {
-                    if (!checkpoint.activated) {
-                        const dx = this.player.x + this.player.width/2 - checkpoint.x - this.ZOOM/2;
-                        const dy = this.player.y + this.player.height/2 - checkpoint.y - this.ZOOM/2;
-                        
-                        if (Math.abs(dx) < this.ZOOM && Math.abs(dy) < this.ZOOM) {
-                            checkpoint.activated = true;
-                            this.game.lastCheckpoint = { x: checkpoint.x, y: checkpoint.y };
-                            this.showMessage('🏁 Checkpoint activé !');
-                            this.addParticles(checkpoint.x + this.ZOOM/2, checkpoint.y + this.ZOOM/2, 15, '#00ffff');
-                        }
-                    }
-                });
-            }
-            
-            playerDeath() {
-                if (!this.gameState.sandboxMode) {
-                    this.game.lives--;
                 }
-                this.addParticles(this.player.x + this.player.width/2, this.player.y + this.player.height/2, 20, this.player.color);
                 
-                if (this.game.lives <= 0) {
-                    this.gameOver();
-                } else {
-                    this.respawnPlayer();
-                }
-            }
-            
-            respawnPlayer() {
-                if (this.game.lastCheckpoint) {
-                    this.player.x = this.game.lastCheckpoint.x;
-                    this.player.y = this.game.lastCheckpoint.y;
-                } else {
-                    // Chercher le spawn vert
-                    for (let y = 0; y < this.map.height; y++) {
-                        for (let x = 0; x < this.map.width; x++) {
-                            const color = this.getPixelColor(x, y);
-                            if (this.colorMatches(color, this.COLORS.GREEN)) {
-                                this.player.x = x * this.ZOOM;
-                                this.player.y = y * this.ZOOM;
-                                return;
+                if (this.colorMatches(currentColor, this.COLORS.ORANGE)) {
+                    this.game.levers.forEach(lever => {
+                        const dx = this.player.x + this.player.width/2 - lever.x - this.ZOOM/2;
+                        const dy = this.player.y + this.player.height/2 - lever.y - this.ZOOM/2;
+                        
+                        if (Math.abs(dx) < this.ZOOM && Math.abs(dy) < this.ZOOM && !lever.activated) {
+                            lever.activated = true;
+                            this.game.grayBlocksDisabled = !this.game.grayBlocksDisabled;
+                            
+                            if (this.game.grayBlocksDisabled) {
+                                this.showMessage(this.t('leverActivated'));
+                            } else {
+                                this.showMessage(this.t('leverDeactivated'));
                             }
+                            
+                            this.addParticles(lever.x + this.ZOOM/2, lever.y + this.ZOOM/2, 20, '#ff8800');
                         }
-                    }
-                }
-                
-                this.player.vx = 0;
-                this.player.vy = 0;
-                this.showMessage('💀 Respawn !');
-                this.updateUI();
-            }
-            
-            gameOver() {
-                this.gameState.gameOver = true;
-                this.showMessage('💀 GAME OVER ! Appuyez sur R pour recommencer');
-            }
-            
-            levelComplete() {
-                this.gameState.levelComplete = true;
-    
-                 // Calculer les stats
-                    const coinsCollected = this.game.coins.filter(c => c.collected).length;
-                    const totalCoins = this.game.coins.length;
-                    const coinPercentage = totalCoins > 0 ? Math.round((coinsCollected / totalCoins) * 100) : 100;
-    
-                    // Afficher l'écran de fin
-                    const endScreen = document.getElementById('endScreen');
-                    const endStats = document.getElementById('endStats');
-    
-                    endStats.innerHTML = `
-                        💰 Score Final: ${this.game.score}<br>
-                        🪙 Pièces: ${coinsCollected}/${totalCoins} (${coinPercentage}%)<br>
-                        ❤️ Vies Restantes: ${this.game.lives}<br>
-                        🎮 Mode: ${this.gameState.sandboxMode ? '🏖️ Bac à Sable' : '🎯 Normal'}<br>
-                        ${coinPercentage === 100 ? '⭐ PARFAIT ! Toutes les pièces collectées !' : ''}
-                    `;
-    
-                    endScreen.style.display = 'flex';
-    
-                    this.addParticles(this.player.x + this.player.width/2, this.player.y + this.player.height/2, 30, '#00ff00');
-                }
-            
-            restartLevel() {
-                if (this.gameState.loaded) {
-                    // Réinitialiser toutes les pièces
-                    this.game.coins.forEach(coin => {
-            coin.collected = false;
-                    });
-        
-                    // Réinitialiser les checkpoints
-                    this.game.checkpoints.forEach(checkpoint => {
-                        checkpoint.activated = false;
-                    });
-        
-                    // Reset du score et des vies
-                    this.game.score = 0;
-                    this.game.lives = this.gameState.sandboxMode ? 999 : 3;
-        
-                    // Respawn au point de départ sans mourir
-                    this.respawnPlayer();
-        
-                    // Reset des états du jeu
-                    this.gameState.gameOver = false;
-                    this.gameState.levelComplete = false;
-                    this.particles = [];
-        
-                    this.updateUI();
-                    this.showMessage('🔄 Niveau redémarré !');
-                }
-            }
-            
-            updateCamera() {
-                const targetX = this.player.x - this.canvas.width / 2;
-                const targetY = this.player.y - this.canvas.height / 2;
-                
-                // Lissage de la caméra
-                this.game.camera.x += (targetX - this.game.camera.x) * 0.1;
-                this.game.camera.y += (targetY - this.game.camera.y) * 0.1;
-                
-                // Limites
-                this.game.camera.x = Math.max(0, Math.min(this.map.width * this.ZOOM - this.canvas.width, this.game.camera.x));
-                this.game.camera.y = Math.max(0, Math.min(this.map.height * this.ZOOM - this.canvas.height, this.game.camera.y));
-            }
-            
-            addParticles(x, y, count, color) {
-                for (let i = 0; i < count; i++) {
-                    this.particles.push({
-                        x: x + (Math.random() - 0.5) * 10,
-                        y: y + (Math.random() - 0.5) * 10,
-                        vx: (Math.random() - 0.5) * 4,
-                        vy: (Math.random() - 0.5) * 4 - 2,
-                        color: color,
-                        life: 1,
-                        decay: 0.02 + Math.random() * 0.02
                     });
                 }
             }
-            
-            updateParticles() {
-                this.particles = this.particles.filter(p => {
-                    p.x += p.vx;
-                    p.y += p.vy;
-                    p.vy += 0.1;
-                    p.life -= p.decay;
-                    return p.life > 0;
-                });
-            }
-            
-            render() {
-                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                
-                if (!this.gameState.loaded) {
-                    this.renderWelcomeScreen();
-                    return;
-                }
-                
-                this.renderMap();
-                this.renderPlayer();
-                this.renderCollectibles();
-                this.renderParticles();
-                
-                if (this.gameState.debugMode) {
-                    this.renderDebug();
-                }
-            }
-            
-            renderWelcomeScreen() {
-                const gradient = this.ctx.createLinearGradient(0, 0, this.canvas.width, this.canvas.height);
-                gradient.addColorStop(0, '#1a1a2e');
-                gradient.addColorStop(1, '#16213e');
-                this.ctx.fillStyle = gradient;
-                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-                
-                this.ctx.fillStyle = '#4a90e2';
-                this.ctx.font = 'bold 32px Courier New';
-                this.ctx.textAlign = 'center';
-                this.ctx.fillText('🎮 Pix’Adventure', this.canvas.width/2, this.canvas.height/2 - 50);
-                
-                this.ctx.fillStyle = 'white';
-                this.ctx.font = '18px Courier New';
-                this.ctx.fillText('Chargez une image de map pour commencer', this.canvas.width/2, this.canvas.height/2);
-                
-                this.ctx.fillStyle = '#888';
-                this.ctx.font = '14px Courier New';
-                this.ctx.fillText('Map basée sur les couleurs : Noir=Mur, Jaune=Pièce, Rouge=Mort', this.canvas.width/2, this.canvas.height/2 + 30);
-                this.ctx.fillText('Vert=Spawn, Bleu=Fin, Cyan=Checkpoint, Violet=Boost', this.canvas.width/2, this.canvas.height/2 + 50);
-            }
-            
-            renderMap() {
-                const startX = Math.floor(this.game.camera.x / this.ZOOM);
-                const startY = Math.floor(this.game.camera.y / this.ZOOM);
-                const endX = Math.min(this.map.width, startX + Math.ceil(this.canvas.width / this.ZOOM) + 1);
-                const endY = Math.min(this.map.height, startY + Math.ceil(this.canvas.height / this.ZOOM) + 1);
-                
-                for (let y = startY; y < endY; y++) {
-                    for (let x = startX; x < endX; x++) {
-                        const color = this.getPixelColor(x, y);
-                        const screenX = x * this.ZOOM - this.game.camera.x;
-                        const screenY = y * this.ZOOM - this.game.camera.y;
-                        
-                        if (this.colorMatches(color, this.COLORS.BLACK)) {
-                            this.ctx.fillStyle = '#2c3e50';
-                            this.ctx.fillRect(screenX, screenY, this.ZOOM, this.ZOOM);
-                            this.ctx.strokeStyle = '#34495e';
-                            this.ctx.strokeRect(screenX, screenY, this.ZOOM, this.ZOOM);
-                        } else if (this.colorMatches(color, this.COLORS.RED)) {
-                            this.ctx.fillStyle = '#e74c3c';
-                            this.ctx.fillRect(screenX, screenY, this.ZOOM, this.ZOOM);
-                        } else if (this.colorMatches(color, this.COLORS.GREEN)) {
-                            this.ctx.fillStyle = '#27ae60';
-                            this.ctx.fillRect(screenX, screenY, this.ZOOM, this.ZOOM);
-                        } else if (this.colorMatches(color, this.COLORS.BLUE)) {
-                            this.ctx.fillStyle = '#3498db';
-                            this.ctx.fillRect(screenX, screenY, this.ZOOM, this.ZOOM);
-                        } else if (this.colorMatches(color, this.COLORS.VIOLET)) {
-                            this.ctx.fillStyle = '#9b59b6';
-                            this.ctx.fillRect(screenX, screenY, this.ZOOM, this.ZOOM);
-                        }
-                    }
-                }
-            }
-            
-            renderPlayer() {
-                // Trail
-                this.ctx.globalAlpha = 0.3;
-                this.player.trail.forEach((point, i) => {
-                    const alpha = i / this.player.trail.length;
-                    this.ctx.globalAlpha = alpha * 0.3;
-                    this.ctx.fillStyle = this.player.color;
-                    this.ctx.fillRect(
-                        point.x - this.game.camera.x - 2,
-                        point.y - this.game.camera.y - 2,
-                        4, 4
-                    );
-                });
-                
-                this.ctx.globalAlpha = 1;
-                
-                // Joueur principal
-                const screenX = this.player.x - this.game.camera.x;
-                const screenY = this.player.y - this.game.camera.y;
-                
-                // Ombre
-                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-                this.ctx.fillRect(screenX + 2, screenY + 2, this.player.width, this.player.height);
-                
-                // Corps du joueur
-                this.ctx.fillStyle = this.player.color;
-                this.ctx.fillRect(screenX, screenY, this.player.width, this.player.height);
-                
-                // Bordure
-                this.ctx.strokeStyle = '#fff';
-                this.ctx.lineWidth = 1;
-                this.ctx.strokeRect(screenX, screenY, this.player.width, this.player.height);
-                
-                // Yeux
-                this.ctx.fillStyle = 'white';
-                this.ctx.fillRect(screenX + 3, screenY + 3, 3, 3);
-                this.ctx.fillRect(screenX + this.player.width - 6, screenY + 3, 3, 3);
-                
-                this.ctx.fillStyle = 'black';
-                this.ctx.fillRect(screenX + 4, screenY + 4, 1, 1);
-                this.ctx.fillRect(screenX + this.player.width - 5, screenY + 4, 1, 1);
-            }
-            
-            renderCollectibles() {
-                // Pièces
-                this.game.coins.forEach(coin => {
-                    if (!coin.collected) {
-                        const screenX = coin.x - this.game.camera.x;
-                        const screenY = coin.y - this.game.camera.y;
-                        
-                        // Animation de pulsation
-                        const pulse = Math.sin(coin.pulse) * 0.2 + 1;
-                        const size = this.ZOOM * 0.6 * pulse;
-                        
-                        // Halo
-                        this.ctx.shadowColor = '#ffd700';
-                        this.ctx.shadowBlur = 10;
-                        
-                        this.ctx.fillStyle = '#ffd700';
-                        this.ctx.beginPath();
-                        this.ctx.arc(screenX, screenY, size/2, 0, Math.PI * 2);
-                        this.ctx.fill();
-                        
-                        // Reset shadow
-                        this.ctx.shadowBlur = 0;
-                        
-                        // Détails de la pièce
-                        this.ctx.fillStyle = '#ffed4e';
-                        this.ctx.beginPath();
-                        this.ctx.arc(screenX, screenY, size/3, 0, Math.PI * 2);
-                        this.ctx.fill();
-                    }
-                });
-                
-                // Checkpoints
-                this.game.checkpoints.forEach(checkpoint => {
-                    const screenX = checkpoint.x - this.game.camera.x + this.ZOOM/2;
-                    const screenY = checkpoint.y - this.game.camera.y + this.ZOOM/2;
-                    
-                    if (checkpoint.activated) {
-                        this.ctx.fillStyle = '#00ff88';
-                        this.ctx.shadowColor = '#00ff88';
-                        this.ctx.shadowBlur = 15;
-                    } else {
-                        this.ctx.fillStyle = '#00ffff';
-                        this.ctx.shadowColor = '#00ffff';
-                        this.ctx.shadowBlur = 5;
-                    }
-                    
-                    this.ctx.fillRect(
-                        screenX - this.ZOOM/2,
-                        screenY - this.ZOOM/2,
-                        this.ZOOM,
-                        this.ZOOM
-                    );
-                    
-                    this.ctx.shadowBlur = 0;
-                    
-                    // Icône checkpoint
-                    this.ctx.fillStyle = 'white';
-                    this.ctx.font = `${this.ZOOM/2}px Arial`;
-                    this.ctx.textAlign = 'center';
-                    this.ctx.fillText('🚩', screenX, screenY + 3);
-                });
-            }
-            
-            renderParticles() {
-                this.particles.forEach(particle => {
-                    this.ctx.globalAlpha = particle.life;
-                    this.ctx.fillStyle = particle.color;
-                    
-                    const screenX = particle.x - this.game.camera.x;
-                    const screenY = particle.y - this.game.camera.y;
-                    
-                    this.ctx.fillRect(screenX - 1, screenY - 1, 2, 2);
-                });
-                this.ctx.globalAlpha = 1;
-            }
-            
-
-            restartFromEndScreen() {
-                document.getElementById('endScreen').style.display = 'none';
-    
-                // Réinitialiser toutes les pièces
-                this.game.coins.forEach(coin => {
-                    coin.collected = false;
-                });
-    
-                // Réinitialiser les checkpoints
-                this.game.checkpoints.forEach(checkpoint => {
-                    checkpoint.activated = false;
-                });
-    
-                // Reset du score et des vies
-                this.game.score = 0;
-                this.game.lives = this.gameState.sandboxMode ? 999 : 3;
-    
-                // Respawn au point de départ
-                this.respawnPlayer();
-    
-                // Reset des états du jeu
-                this.gameState.gameOver = false;
-                this.gameState.levelComplete = false;
-    
-                this.updateUI();
-                this.showMessage('🔄 Niveau redémarré !');
-            }
-
-
-            loadNewMap() {
-                document.getElementById('endScreen').style.display = 'none';
-                document.getElementById('mapFile').click();
-            }
-
-            renderDebug() {
-                const debugInfo = document.getElementById('debugInfo');
-                if (debugInfo) {
-                    debugInfo.style.display = 'block';
-                    debugInfo.innerHTML = `
-                        <strong>🔧 DEBUG MODE</strong><br>
-                        Position: ${Math.floor(this.player.x/this.ZOOM)}, ${Math.floor(this.player.y/this.ZOOM)}<br>
-                        Vitesse: ${this.player.vx.toFixed(1)}, ${this.player.vy.toFixed(1)}<br>
-                        Au sol: ${this.player.onGround ? 'Oui' : 'Non'}<br>
-                        Caméra: ${Math.floor(this.game.camera.x)}, ${Math.floor(this.game.camera.y)}<br>
-                        Pièces: ${this.game.coins.filter(c => !c.collected).length}/${this.game.coins.length}<br>
-                        Particules: ${this.particles.length}<br>
-                        FPS: ${Math.round(1000 / (Date.now() - (this.lastFrame || Date.now())))}<br>
-                    `;
-                }
-                
-                // Grille de debug
-                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-                this.ctx.lineWidth = 1;
-                
-                const startX = Math.floor(this.game.camera.x / this.ZOOM) * this.ZOOM;
-                const startY = Math.floor(this.game.camera.y / this.ZOOM) * this.ZOOM;
-                
-                for (let x = startX; x < this.game.camera.x + this.canvas.width; x += this.ZOOM) {
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(x - this.game.camera.x, 0);
-                    this.ctx.lineTo(x - this.game.camera.x, this.canvas.height);
-                    this.ctx.stroke();
-                }
-                
-                for (let y = startY; y < this.game.camera.y + this.canvas.height; y += this.ZOOM) {
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(0, y - this.game.camera.y);
-                    this.ctx.lineTo(this.canvas.width, y - this.game.camera.y);
-                    this.ctx.stroke();
-                }
-                
-                // Hitbox du joueur
-                this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
-                this.ctx.lineWidth = 2;
-                this.ctx.strokeRect(
-                    this.player.x - this.game.camera.x,
-                    this.player.y - this.game.camera.y,
-                    this.player.width,
-                    this.player.height
-                );
-            }
-            
-            toggleDebug() {
-                this.gameState.debugMode = !this.gameState.debugMode;
-                const debugInfo = document.getElementById('debugInfo');
-                if (debugInfo && !this.gameState.debugMode) {
-                    debugInfo.style.display = 'none';
-                }
-            }
-            
-            showMessage(text, duration = 3000) {
-                const messageEl = document.getElementById('gameMessage');
-                messageEl.textContent = text;
-                messageEl.classList.add('pulsing');
-                
-                setTimeout(() => {
-                    messageEl.classList.remove('pulsing');
-                    if (messageEl.textContent === text) {
-                        messageEl.textContent = '';
-                    }
-                }, duration);
-            }
-            
-            updateUI() {
-                document.getElementById('score').textContent = this.game.score;
-                document.getElementById('lives').textContent = this.game.lives;
-            }
-            
-            gameLoop() {
-                this.lastFrame = Date.now();
-                this.update();
-                this.render();
-                requestAnimationFrame(() => this.gameLoop());
-            }
-        }
-        
-
-        // Démarrage du jeu
-        window.addEventListener('load', () => {
-            window.game = new PixelPlatformer(); // Ajouter window.game =
-        });
-        
-        // Empêcher le menu contextuel sur le canvas
-        document.addEventListener('contextmenu', (e) => {
-            if (e.target.tagName === 'CANVAS') {
-                e.preventDefault();
-            }
-        });
-        
-        // Gestion de la visibilité de la page
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                // Pause le jeu quand l'onglet n'est pas visible
-                console.log('Jeu en pause');
-            }
-        });
-    </script>
-</body>
-</html>
