@@ -408,7 +408,9 @@
                     BLUE: [0, 0, 255],       // Fin du niveau
                     CYAN: [0, 255, 255],     // Checkpoint
                     VIOLET: [255, 0, 255],   // Boost de saut
-                    WHITE: [255, 255, 255]   // Arrière-plan
+                    WHITE: [255, 255, 255],   // Arrière-plan
+                    ORANGE: [255, 165, 0],   // Levier
+                    GRAY: [128, 128, 128]    // Blocs désactivables
                 };
 
                 // Système de traduction
@@ -449,7 +451,8 @@
                         livesLeft: "❤️ Vies Restantes:",
                         mode: "🎮 Mode:",
                         perfect: "⭐ PARFAIT ! Toutes les pièces collectées !",
-                        normal: "🎯 Normal"
+                        normal: "🎯 Normal",
+                        leverActivated: "⚡ Levier activé - Blocs gris désactivés !"
                     },
                     en: {
                         title: "🎮 Pix'Adventure 🎨",
@@ -487,7 +490,8 @@
                         livesLeft: "❤️ Lives Left:",
                         mode: "🎮 Mode:",
                         perfect: "⭐ PERFECT! All coins collected!",
-                        normal: "🎯 Normal"
+                        normal: "🎯 Normal",
+                        leverActivated: "⚡ Lever activated - Gray blocks disabled!"
     }
 };
 
@@ -779,14 +783,29 @@
             }
             
             initializeLevel() {
-                this.game.coins=[]; this.game.checkpoints=[]; this.game.levers=[]; this.game.score=0; this.game.lives=this.gameState.sandboxMode?999:3; this.particles=[]; this.gameState.gameOver=false; this.gameState.levelComplete=false; this.gameState.leversActivated=false;
-                for (let y=0; y<this.map.height; y++) { for (let x=0; x<this.map.width; x++) {
-                    const c=this.getPixelColor(x,y);
-                    if (this.colorMatches(c,this.COLORS.GREEN)) this.game.lastCheckpoint={x:x*this.ZOOM,y:y*this.ZOOM};
-                    else if (this.colorMatches(c,this.COLORS.YELLOW)) this.game.coins.push({x:x*this.ZOOM+this.ZOOM/2,y:y*this.ZOOM+this.ZOOM/2,collected:false,pulse:Math.random()*Math.PI*2});
-                    else if (this.colorMatches(c,this.COLORS.CYAN)) this.game.checkpoints.push({x:x*this.ZOOM,y:y*this.ZOOM,activated:false});
-                    else if (this.colorMatches(c,this.COLORS.ORANGE)) this.game.levers.push({x:x*this.ZOOM,y:y*this.ZOOM,activated:false,pulse:Math.random()*Math.PI*2});
-                }}
+                this.game.coins=[];
+                this.game.checkpoints=[];
+                this.game.levers=[];
+                this.game.score=0;
+                this.game.lives=this.gameState.sandboxMode?999:3;
+                this.particles=[];
+                this.gameState.gameOver=false;
+                this.gameState.levelComplete=false;
+                this.gameState.leversActivated=false;
+                
+                for (let y=0; y<this.map.height; y++) {
+                    for (let x=0; x<this.map.width; x++) {
+                        const c=this.getPixelColor(x,y);
+                        if (this.colorMatches(c,this.COLORS.GREEN)) 
+                            this.game.lastCheckpoint={x:x*this.ZOOM,y:y*this.ZOOM};
+                        else if (this.colorMatches(c,this.COLORS.YELLOW)) 
+                            this.game.coins.push({x:x*this.ZOOM+this.ZOOM/2,y:y*this.ZOOM+this.ZOOM/2,collected:false,pulse:Math.random()*Math.PI*2});
+                        else if (this.colorMatches(c,this.COLORS.CYAN)) 
+                            this.game.checkpoints.push({x:x*this.ZOOM,y:y*this.ZOOM,activated:false});
+                        else if (this.colorMatches(c,this.COLORS.ORANGE)) 
+                            this.game.levers.push({x:x*this.ZOOM,y:y*this.ZOOM,activated:false,pulse:Math.random()*Math.PI*2});
+                    }
+                }
                 this.updateUI();
             }
             
@@ -883,22 +902,23 @@
             }
             
             checkCollision(x, y, width, height) {
-            const x1 = Math.floor(x / this.ZOOM);
-            const y1 = Math.floor(y / this.ZOOM);
-            const x2 = Math.floor((x + width - 1) / this.ZOOM);
-            const y2 = Math.floor((y + height - 1) / this.ZOOM);
-             
-            for (let my = y1; my <= y2; my++) {
-                for (let mx = x1; mx <= x2; mx++) {
-                    const color = this.getPixelColor(mx, my);
-                // SEULS les blocs NOIRS et violet sont solides maintenant
-                if (this.colorMatches(color, this.COLORS.BLACK) || this.colorMatches(color, this.COLORS.VIOLET)) {
-                   return true;
-               }
-        }
-    }
-    return false;
-}  
+                const x1 = Math.floor(x / this.ZOOM);
+                const y1 = Math.floor(y / this.ZOOM);
+                const x2 = Math.floor((x + width - 1) / this.ZOOM);
+                const y2 = Math.floor((y + height - 1) / this.ZOOM);
+                 
+                for (let my = y1; my <= y2; my++) {
+                    for (let mx = x1; mx <= x2; mx++) {
+                        const color = this.getPixelColor(mx, my);
+                        if (this.colorMatches(color, this.COLORS.BLACK) || 
+                            this.colorMatches(color, this.COLORS.VIOLET) ||
+                            (this.colorMatches(color, this.COLORS.GRAY) && !this.gameState.leversActivated)) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
             
             checkSpecialTiles() {
                 const centerX = Math.floor((this.player.x + this.player.width / 2) / this.ZOOM);
@@ -930,9 +950,45 @@
             }
             
             checkCollectibles() {
-                this.game.coins.forEach(coin => { if (!coin.collected) { const dx=this.player.x+this.player.width/2-coin.x,dy=this.player.y+this.player.height/2-coin.y; if (Math.sqrt(dx*dx+dy*dy)<this.ZOOM*0.6) { coin.collected=true; this.game.score+=100; this.addParticles(coin.x,coin.y,10,'#ffd700'); this.updateUI(); } coin.pulse+=0.1; }});
-                this.game.checkpoints.forEach(cp => { if (!cp.activated) { const dx=this.player.x+this.player.width/2-cp.x-this.ZOOM/2,dy=this.player.y+this.player.height/2-cp.y-this.ZOOM/2; if (Math.abs(dx)<this.ZOOM && Math.abs(dy)<this.ZOOM) { cp.activated=true; this.game.lastCheckpoint={x:cp.x,y:cp.y}; this.addParticles(cp.x+this.ZOOM/2,cp.y+this.ZOOM/2,15,'#00ffff'); }}});
-                this.game.levers.forEach(lv => { if (!lv.activated) { const dx=this.player.x+this.player.width/2-lv.x-this.ZOOM/2,dy=this.player.y+this.player.height/2-lv.y-this.ZOOM/2; if (Math.abs(dx)<this.ZOOM && Math.abs(dy)<this.ZOOM) { lv.activated=true; this.gameState.leversActivated=true; this.addParticles(lv.x+this.ZOOM/2,lv.y+this.ZOOM/2,20,'#ffa500'); this.showMessage('Levier active - Blocs gris desactives!'); }} else { lv.pulse+=0.1; }});
+                this.game.coins.forEach(coin => {
+                    if (!coin.collected) {
+                        const dx=this.player.x+this.player.width/2-coin.x;
+                        const dy=this.player.y+this.player.height/2-coin.y;
+                        if (Math.sqrt(dx*dx+dy*dy)<this.ZOOM*0.6) {
+                            coin.collected=true;
+                            this.game.score+=100;
+                            this.addParticles(coin.x,coin.y,10,'#ffd700');
+                            this.updateUI();
+                        }
+                        coin.pulse+=0.1;
+                    }
+                });
+    
+                this.game.checkpoints.forEach(cp => {
+                    if (!cp.activated) {
+                        const dx=this.player.x+this.player.width/2-cp.x-this.ZOOM/2;
+                        const dy=this.player.y+this.player.height/2-cp.y-this.ZOOM/2;
+                        if (Math.abs(dx)<this.ZOOM && Math.abs(dy)<this.ZOOM) {
+                            cp.activated=true;
+                            this.game.lastCheckpoint={x:cp.x,y:cp.y};
+                            this.addParticles(cp.x+this.ZOOM/2,cp.y+this.ZOOM/2,15,'#00ffff');
+                        }
+                    }
+                });
+    
+                this.game.levers.forEach(lv => {
+                    if (!lv.activated) {
+                        const dx=this.player.x+this.player.width/2-lv.x-this.ZOOM/2;
+                        const dy=this.player.y+this.player.height/2-lv.y-this.ZOOM/2;
+                        if (Math.abs(dx)<this.ZOOM && Math.abs(dy)<this.ZOOM) {
+                            lv.activated=true;
+                            this.gameState.leversActivated=true;
+                            this.addParticles(lv.x+this.ZOOM/2,lv.y+this.ZOOM/2,20,'#ffa500');
+                            this.showMessage(this.t('leverActivated'));
+                        }
+                    }
+                    lv.pulse+=0.1;
+                });
             }
             
             playerDeath() {
@@ -1109,16 +1165,43 @@
             }
             
             renderMap() {
-                const sx=Math.floor(this.game.camera.x/this.ZOOM),sy=Math.floor(this.game.camera.y/this.ZOOM),ex=Math.min(this.map.width,sx+Math.ceil(this.canvas.width/this.ZOOM)+1),ey=Math.min(this.map.height,sy+Math.ceil(this.canvas.height/this.ZOOM)+1);
-                for (let y=sy; y<ey; y++) { for (let x=sx; x<ex; x++) {
-                    const c=this.getPixelColor(x,y),scx=x*this.ZOOM-this.game.camera.x,scy=y*this.ZOOM-this.game.camera.y;
-                    if (this.colorMatches(c,this.COLORS.BLACK)) { this.ctx.fillStyle='#2c3e50'; this.ctx.fillRect(scx,scy,this.ZOOM,this.ZOOM); }
-                    else if (this.colorMatches(c,this.COLORS.RED)) { this.ctx.fillStyle='#e74c3c'; this.ctx.fillRect(scx,scy,this.ZOOM,this.ZOOM); }
-                    else if (this.colorMatches(c,this.COLORS.GREEN)) { this.ctx.fillStyle='#27ae60'; this.ctx.fillRect(scx,scy,this.ZOOM,this.ZOOM); }
-                    else if (this.colorMatches(c,this.COLORS.BLUE)) { this.ctx.fillStyle='#3498db'; this.ctx.fillRect(scx,scy,this.ZOOM,this.ZOOM); }
-                    else if (this.colorMatches(c,this.COLORS.VIOLET)) { this.ctx.fillStyle='#9b59b6'; this.ctx.fillRect(scx,scy,this.ZOOM,this.ZOOM); }
-                    else if (this.colorMatches(c,this.COLORS.GRAY)) { this.ctx.fillStyle=this.gameState.leversActivated?'rgba(128,128,128,0.3)':'#7f8c8d'; this.ctx.fillRect(scx,scy,this.ZOOM,this.ZOOM); }
-                }}
+                const sx=Math.floor(this.game.camera.x/this.ZOOM);
+                const sy=Math.floor(this.game.camera.y/this.ZOOM);
+                const ex=Math.min(this.map.width,sx+Math.ceil(this.canvas.width/this.ZOOM)+1);
+                const ey=Math.min(this.map.height,sy+Math.ceil(this.canvas.height/this.ZOOM)+1);
+                
+                for (let y=sy; y<ey; y++) {
+                    for (let x=sx; x<ex; x++) {
+                        const c=this.getPixelColor(x,y);
+                        const scx=x*this.ZOOM-this.game.camera.x;
+                        const scy=y*this.ZOOM-this.game.camera.y;
+            
+                        if (this.colorMatches(c,this.COLORS.BLACK)) {
+                            this.ctx.fillStyle='#2c3e50';
+                            this.ctx.fillRect(scx,scy,this.ZOOM,this.ZOOM);
+                        }
+                        else if (this.colorMatches(c,this.COLORS.RED)) {
+                            this.ctx.fillStyle='#e74c3c';
+                            this.ctx.fillRect(scx,scy,this.ZOOM,this.ZOOM);
+                        }
+                        else if (this.colorMatches(c,this.COLORS.GREEN)) {
+                            this.ctx.fillStyle='#27ae60';
+                            this.ctx.fillRect(scx,scy,this.ZOOM,this.ZOOM);
+                        }
+                        else if (this.colorMatches(c,this.COLORS.BLUE)) {
+                            this.ctx.fillStyle='#3498db';
+                            this.ctx.fillRect(scx,scy,this.ZOOM,this.ZOOM);
+                        }
+                        else if (this.colorMatches(c,this.COLORS.VIOLET)) {
+                            this.ctx.fillStyle='#9b59b6';
+                            this.ctx.fillRect(scx,scy,this.ZOOM,this.ZOOM);
+                        }
+                        else if (this.colorMatches(c,this.COLORS.GRAY)) {
+                            this.ctx.fillStyle=this.gameState.leversActivated?'rgba(128,128,128,0.3)':'#7f8c8d';
+                            this.ctx.fillRect(scx,scy,this.ZOOM,this.ZOOM);
+                        }
+                    }
+                }
             }
             
             renderPlayer() {
@@ -1225,6 +1308,32 @@
                     this.ctx.textAlign = 'center';
                     this.ctx.fillText('🚩', screenX, screenY + 3);
                 });
+    
+    // Leviers
+                    this.game.levers.forEach(lever => {
+                        const screenX = lever.x - this.game.camera.x + this.ZOOM/2;
+                        const screenY = lever.y - this.game.camera.y + this.ZOOM/2;
+                        const pulse = Math.sin(lever.pulse) * 0.2 + 1;
+        
+                        this.ctx.fillStyle = lever.activated ? '#00ff00' : '#ffa500';
+                        this.ctx.shadowColor = lever.activated ? '#00ff00' : '#ffa500';
+                        this.ctx.shadowBlur = lever.activated ? 15 : 5;
+                        
+                        this.ctx.fillRect(
+                            screenX - this.ZOOM/2,
+                            screenY - this.ZOOM/2,
+                            this.ZOOM,
+                            this.ZOOM
+                        );
+                        
+                        this.ctx.shadowBlur = 0;
+                        
+                        this.ctx.fillStyle = 'white';
+                        this.ctx.font = `${this.ZOOM/2}px Arial`;
+                        this.ctx.textAlign = 'center';
+                        this.ctx.fillText('⚡', screenX, screenY + 3);
+                    });
+                }
             }
             
             renderParticles() {
