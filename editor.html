@@ -204,6 +204,64 @@
             border-radius: 8px;
         }
 
+        .confirmation-dialog {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #e74c3c;
+            box-shadow: 0 0 20px rgba(231, 76, 60, 0.5);
+            text-align: center;
+            z-index: 1000;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .confirmation-dialog h2 {
+            color: #e74c3c;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .confirmation-dialog p {
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .confirmation-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .confirm-btn, .cancel-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .confirm-btn {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .cancel-btn {
+            background: linear-gradient(45deg, #4a90e2, #357abd);
+            color: white;
+        }
+
+        .confirm-btn:hover, .cancel-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.6; }
@@ -265,8 +323,10 @@
             </div>
             
             <div class="tool-group">
-                <button class="action-btn" onclick="editor.clear()" id="clearBtn">🗑️ Vider</button>
-                <button class="action-btn" onclick="editor.fill('wall')" id="fillBtn">⬛ Remplir</button>
+                <button class="action-btn" onclick="editor.undo()" id="undoBtn">↩️ Retour</button>
+                <button class="action-btn" onclick="editor.redo()" id="redoBtn">↪️ Suivant</button>
+                <button class="action-btn" onclick="editor.showClearConfirmation()" id="clearBtn">🗑️ Vider</button>
+                <button class="action-btn" onclick="editor.showFillConfirmation()" id="fillBtn">⬛ Remplir</button>
             </div>
         </div>
 
@@ -343,6 +403,8 @@
                 gameBtn: "🎮 JEU",
                 sizeLabel: "Taille:",
                 createBtn: "📐 Créer",
+                undoBtn: "↩️ Retour",
+                redoBtn: "↪️ Suivant",
                 clearBtn: "🗑️ Vider",
                 fillBtn: "⬛ Remplir",
                 downloadBtn: "💾 Télécharger PNG",
@@ -358,6 +420,12 @@
                 legendGray: "⬜ Bloc désactivable (Gris)",
                 legendEraser: "🧽 Arrière-plan (Blanc)",
                 infoText: "💡 Cliquez pour placer, maintenez et glissez pour dessiner en continu<br>🖱️ Restez appuyé et bougez la souris pour placer plusieurs couleurs d'affilée<br>🔶 Le levier orange désactive les blocs gris quand on le touche",
+                confirmClearTitle: "⚠️ Confirmer l'effacement",
+                confirmClearMessage: "ATTENTION : Cette action effacera tout le contenu du canvas. Voulez-vous continuer ?",
+                confirmFillTitle: "⚠️ Confirmer le remplissage",
+                confirmFillMessage: "ATTENTION : Cette action remplira tout le canvas avec des murs. Voulez-vous continuer ?",
+                confirmBtn: "Confirmer",
+                cancelBtn: "Annuler",
                 tooltips: {
                     wall: "Mur",
                     coin: "Pièce",
@@ -368,7 +436,9 @@
                     boost: "Boost",
                     lever: "Levier",
                     gray: "Bloc désactivable",
-                    eraser: "Gomme"
+                    eraser: "Gomme",
+                    undo: "Retour en arrière",
+                    redo: "Suivant"
                 }
             },
             en: {
@@ -376,6 +446,8 @@
                 gameBtn: "🎮 GAME",
                 sizeLabel: "Size:",
                 createBtn: "📐 Create",
+                undoBtn: "↩️ Undo",
+                redoBtn: "↪️ Redo",
                 clearBtn: "🗑️ Clear",
                 fillBtn: "⬛ Fill",
                 downloadBtn: "💾 Download PNG",
@@ -391,6 +463,12 @@
                 legendGray: "⬜ Deactivatable block (Gray)",
                 legendEraser: "🧽 Background (White)",
                 infoText: "💡 Click to place, hold and drag to draw continuously<br>🖱️ Hold down and move mouse to place multiple colors in a row<br>🔶 Orange lever disables gray blocks when touched",
+                confirmClearTitle: "⚠️ Confirm Clear",
+                confirmClearMessage: "WARNING: This action will erase all canvas content. Do you want to continue?",
+                confirmFillTitle: "⚠️ Confirm Fill",
+                confirmFillMessage: "WARNING: This action will fill the entire canvas with walls. Do you want to continue?",
+                confirmBtn: "Confirm",
+                cancelBtn: "Cancel",
                 tooltips: {
                     wall: "Wall",
                     coin: "Coin",
@@ -401,7 +479,9 @@
                     boost: "Boost",
                     lever: "Lever",
                     gray: "Deactivatable block",
-                    eraser: "Eraser"
+                    eraser: "Eraser",
+                    undo: "Undo",
+                    redo: "Redo"
                 }
             }
         };
@@ -447,6 +527,8 @@
                 document.getElementById('gameBtn').textContent = t.gameBtn;
                 document.getElementById('sizeLabel').textContent = t.sizeLabel;
                 document.getElementById('createBtn').textContent = t.createBtn;
+                document.getElementById('undoBtn').textContent = t.undoBtn;
+                document.getElementById('redoBtn').textContent = t.redoBtn;
                 document.getElementById('clearBtn').textContent = t.clearBtn;
                 document.getElementById('fillBtn').textContent = t.fillBtn;
                 document.getElementById('downloadBtn').textContent = t.downloadBtn;
@@ -471,6 +553,9 @@
                         btn.title = t.tooltips[tool];
                     }
                 });
+
+                document.getElementById('undoBtn').title = t.tooltips.undo;
+                document.getElementById('redoBtn').title = t.tooltips.redo;
 
                 document.documentElement.lang = this.currentLanguage;
             }
@@ -507,6 +592,9 @@
                 this.isDrawing = false;
                 this.grid = [];
                 this.lastDrawnCell = { x: -1, y: -1 };
+                this.undoHistory = [];
+                this.redoHistory = [];
+                this.undoLimit = 50; // Limit history to prevent memory issues
                 
                 this.init();
             }
@@ -514,6 +602,95 @@
             init() {
                 this.setupEventListeners();
                 this.createCanvas();
+            }
+            
+            saveState() {
+                // Deep copy the current grid
+                const state = this.grid.map(row => row.map(cell => [...cell]));
+                this.undoHistory.push(state);
+                if (this.undoHistory.length > this.undoLimit) {
+                    this.undoHistory.shift(); // Remove oldest state if limit exceeded
+                }
+                // Clear redo history when a new state is saved
+                this.redoHistory = [];
+            }
+            
+            undo() {
+                if (this.undoHistory.length > 0) {
+                    // Save current state to redo history
+                    const currentState = this.grid.map(row => row.map(cell => [...cell]));
+                    this.redoHistory.push(currentState);
+                    if (this.redoHistory.length > this.undoLimit) {
+                        this.redoHistory.shift();
+                    }
+                    // Restore previous state
+                    this.grid = this.undoHistory.pop();
+                    this.render();
+                }
+            }
+            
+            redo() {
+                if (this.redoHistory.length > 0) {
+                    // Save current state to undo history
+                    const currentState = this.grid.map(row => row.map(cell => [...cell]));
+                    this.undoHistory.push(currentState);
+                    if (this.undoHistory.length > this.undoLimit) {
+                        this.undoHistory.shift();
+                    }
+                    // Restore next state
+                    this.grid = this.redoHistory.pop();
+                    this.render();
+                }
+            }
+            
+            showConfirmation(title, message, onConfirm) {
+                const dialog = document.createElement('div');
+                dialog.className = 'confirmation-dialog';
+                
+                dialog.innerHTML = `
+                    <h2>${title}</h2>
+                    <p>${message}</p>
+                    <div class="confirmation-buttons">
+                        <button class="confirm-btn">${languageManager.getText('confirmBtn')}</button>
+                        <button class="cancel-btn">${languageManager.getText('cancelBtn')}</button>
+                    </div>
+                `;
+                
+                document.body.appendChild(dialog);
+                
+                const confirmBtn = dialog.querySelector('.confirm-btn');
+                const cancelBtn = dialog.querySelector('.cancel-btn');
+                
+                confirmBtn.addEventListener('click', () => {
+                    onConfirm();
+                    document.body.removeChild(dialog);
+                });
+                
+                cancelBtn.addEventListener('click', () => {
+                    document.body.removeChild(dialog);
+                });
+            }
+            
+            showClearConfirmation() {
+                this.showConfirmation(
+                    languageManager.getText('confirmClearTitle'),
+                    languageManager.getText('confirmClearMessage'),
+                    () => {
+                        this.saveState();
+                        this.clear();
+                    }
+                );
+            }
+            
+            showFillConfirmation() {
+                this.showConfirmation(
+                    languageManager.getText('confirmFillTitle'),
+                    languageManager.getText('confirmFillMessage'),
+                    () => {
+                        this.saveState();
+                        this.fill('wall');
+                    }
+                );
             }
             
             setupEventListeners() {
@@ -527,6 +704,7 @@
                 
                 this.canvas.addEventListener('mousedown', (e) => {
                     this.isDrawing = true;
+                    this.saveState();
                     this.lastDrawnCell = { x: -1, y: -1 };
                     this.draw(e);
                     e.preventDefault();
@@ -550,6 +728,7 @@
                 
                 this.canvas.addEventListener('touchstart', (e) => {
                     this.isDrawing = true;
+                    this.saveState();
                     this.lastDrawnCell = { x: -1, y: -1 };
                     const touch = e.touches[0];
                     const mouseEvent = new MouseEvent('mousedown', {
@@ -582,11 +761,13 @@
                 });
                 
                 this.imageLoader.addEventListener('change', (e) => {
+                    this.saveState();
                     this.loadImageFile(e.target.files[0]);
                 });
             }
             
             createCanvas() {
+                this.saveState();
                 this.width = parseInt(document.getElementById('widthInput').value);
                 this.height = parseInt(document.getElementById('heightInput').value);
                 
