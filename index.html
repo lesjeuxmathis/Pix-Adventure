@@ -408,7 +408,9 @@
                     BLUE: [0, 0, 255],       // Fin du niveau
                     CYAN: [0, 255, 255],     // Checkpoint
                     VIOLET: [255, 0, 255],   // Boost de saut
-                    WHITE: [255, 255, 255]   // Arrière-plan
+                    WHITE: [255, 255, 255],  // Arrière-plan
+                    ORANGE: [255, 165, 0],   // Levier interactif
+                    GRAY: [128, 128, 128]    // Blocs désactivables
                 };
 
                 // Système de traduction
@@ -442,14 +444,15 @@
                         levelRestarted: "🔄 Niveau redémarré !",
                         welcomeTitle: "🎮 Pix'Adventure",
                         welcomeText: "Chargez une image de map pour commencer",
-                        mapColors1: "Map basée sur les couleurs : Noir=Mur, Jaune=Pièce, Rouge=Mort",
-                        mapColors2: "Vert=Spawn, Bleu=Fin, Cyan=Checkpoint, Violet=Boost",
+                        mapColors1: "Map basée sur les couleurs : Noir=Mur, Jaune=Pièce, Rouge=Mort, Gris=Bloc désactivable",
+                        mapColors2: "Vert=Spawn, Bleu=Fin, Cyan=Checkpoint, Violet=Boost, Orange=Levier",
                         finalScore: "💰 Score Final:",
                         coins: "🪙 Pièces:",
                         livesLeft: "❤️ Vies Restantes:",
                         mode: "🎮 Mode:",
                         perfect: "⭐ PARFAIT ! Toutes les pièces collectées !",
-                        normal: "🎯 Normal"
+                        normal: "🎯 Normal",
+                        leverActivated: "🔶 Levier activé ! Blocs gris désactivés"
                     },
                     en: {
                         title: "🎮 Pix'Adventure 🎨",
@@ -480,14 +483,15 @@
                         levelRestarted: "🔄 Level restarted!",
                         welcomeTitle: "🎮 Pix'Adventure",
                         welcomeText: "Load a map image to start",
-                        mapColors1: "Color-based map: Black=Wall, Yellow=Coin, Red=Death",
-                        mapColors2: "Green=Spawn, Blue=End, Cyan=Checkpoint, Purple=Boost",
+                        mapColors1: "Color-based map: Black=Wall, Yellow=Coin, Red=Death, Gray=Deactivatable block",
+                        mapColors2: "Green=Spawn, Blue=End, Cyan=Checkpoint, Purple=Boost, Orange=Lever",
                         finalScore: "💰 Final Score:",
                         coins: "🪙 Coins:",
                         livesLeft: "❤️ Lives Left:",
                         mode: "🎮 Mode:",
                         perfect: "⭐ PERFECT! All coins collected!",
-                        normal: "🎯 Normal"
+                        normal: "🎯 Normal",
+                        leverActivated: "🔶 Lever activated! Gray blocks deactivated"
     }
 };
 
@@ -531,6 +535,8 @@
                     lives: 3,
                     coins: [],
                     checkpoints: [],
+                    levers: [],
+                    grayBlocksActive: true,
                     lastCheckpoint: null,
                     camera: { x: 0, y: 0 }
                 };
@@ -612,7 +618,7 @@
                 } else {
                    sandboxBtn.textContent = '🏖️ Bac à sable';
                    sandboxBtn.classList.remove('active');
-                   this.game.lives = 4;
+                   this.game.lives = 3;
                    this.playerDeath();
                    this.showMessage('🎮 Mode Normal activé');
                 }
@@ -782,6 +788,8 @@
                 // Reset du jeu
                 this.game.coins = [];
                 this.game.checkpoints = [];
+                this.game.levers = [];
+                this.game.grayBlocksActive = true;
                 this.game.score = 0;
                 this.game.lives = 3;
                 this.particles = [];
@@ -807,6 +815,13 @@
                                 x: x * this.ZOOM,
                                 y: y * this.ZOOM,
                                 activated: false
+                            });
+                        } else if (this.colorMatches(color, this.COLORS.ORANGE)) {
+                            this.game.levers.push({
+                                x: x * this.ZOOM,
+                                y: y * this.ZOOM,
+                                activated: false,
+                                pulse: Math.random() * Math.PI * 2
                             });
                         }
                     }
@@ -916,8 +931,9 @@
             for (let my = y1; my <= y2; my++) {
                 for (let mx = x1; mx <= x2; mx++) {
                     const color = this.getPixelColor(mx, my);
-                // SEULS les blocs NOIRS et violet sont solides maintenant
-                if (this.colorMatches(color, this.COLORS.BLACK) || this.colorMatches(color, this.COLORS.VIOLET)) {
+                if (this.colorMatches(color, this.COLORS.BLACK) || 
+                    this.colorMatches(color, this.COLORS.VIOLET) ||
+                    (this.colorMatches(color, this.COLORS.GRAY) && this.game.grayBlocksActive)) {
                    return true;
                }
         }
@@ -984,6 +1000,21 @@
                             this.game.lastCheckpoint = { x: checkpoint.x, y: checkpoint.y };
                             this.showMessage('🏁 Checkpoint activé !');
                             this.addParticles(checkpoint.x + this.ZOOM/2, checkpoint.y + this.ZOOM/2, 15, '#00ffff');
+                        }
+                    }
+                });
+                
+                // Leviers
+                this.game.levers.forEach(lever => {
+                    if (!lever.activated) {
+                        const dx = this.player.x + this.player.width/2 - lever.x - this.ZOOM/2;
+                        const dy = this.player.y + this.player.height/2 - lever.y - this.ZOOM/2;
+                        
+                        if (Math.abs(dx) < this.ZOOM && Math.abs(dy) < this.ZOOM) {
+                            lever.activated = true;
+                            this.game.grayBlocksActive = false;
+                            this.showMessage(this.t('leverActivated'));
+                            this.addParticles(lever.x + this.ZOOM/2, lever.y + this.ZOOM/2, 15, '#ff9900');
                         }
                     }
                 });
@@ -1067,6 +1098,12 @@
                     this.game.checkpoints.forEach(checkpoint => {
                         checkpoint.activated = false;
                     });
+        
+                    // Réinitialiser les leviers
+                    this.game.levers.forEach(lever => {
+                        lever.activated = false;
+                    });
+                    this.game.grayBlocksActive = true;
         
                     // Reset du score et des vies
                     this.game.score = 0;
@@ -1158,8 +1195,8 @@
                 
                 this.ctx.fillStyle = '#888';
                 this.ctx.font = '14px Courier New';
-                this.ctx.fillText('Map basée sur les couleurs : Noir=Mur, Jaune=Pièce, Rouge=Mort', this.canvas.width/2, this.canvas.height/2 + 30);
-                this.ctx.fillText('Vert=Spawn, Bleu=Fin, Cyan=Checkpoint, Violet=Boost', this.canvas.width/2, this.canvas.height/2 + 50);
+                this.ctx.fillText(this.t('mapColors1'), this.canvas.width/2, this.canvas.height/2 + 30);
+                this.ctx.fillText(this.t('mapColors2'), this.canvas.width/2, this.canvas.height/2 + 50);
             }
             
             renderMap() {
@@ -1191,6 +1228,18 @@
                         } else if (this.colorMatches(color, this.COLORS.VIOLET)) {
                             this.ctx.fillStyle = '#9b59b6';
                             this.ctx.fillRect(screenX, screenY, this.ZOOM, this.ZOOM);
+                        } else if (this.colorMatches(color, this.COLORS.GRAY)) {
+                            if (this.game.grayBlocksActive) {
+                                this.ctx.fillStyle = '#808080';
+                                this.ctx.fillRect(screenX, screenY, this.ZOOM, this.ZOOM);
+                                this.ctx.strokeStyle = '#696969';
+                                this.ctx.strokeRect(screenX, screenY, this.ZOOM, this.ZOOM);
+                            } else {
+                                this.ctx.globalAlpha = 0.3;
+                                this.ctx.fillStyle = '#808080';
+                                this.ctx.fillRect(screenX, screenY, this.ZOOM, this.ZOOM);
+                                this.ctx.globalAlpha = 1;
+                            }
                         }
                     }
                 }
@@ -1300,6 +1349,40 @@
                     this.ctx.textAlign = 'center';
                     this.ctx.fillText('🚩', screenX, screenY + 3);
                 });
+                
+                // Leviers
+                this.game.levers.forEach(lever => {
+                    const screenX = lever.x - this.game.camera.x + this.ZOOM/2;
+                    const screenY = lever.y - this.game.camera.y + this.ZOOM/2;
+                    
+                    let fillColor = lever.activated ? '#00ff00' : '#ffa500';
+                    let shadowColor = lever.activated ? '#00ff00' : '#ffa500';
+                    let shadowBlur = lever.activated ? 15 : 5;
+                    
+                    if (!lever.activated) {
+                        lever.pulse += 0.1;
+                        shadowBlur = Math.sin(lever.pulse) * 5 + 10;
+                    }
+                    
+                    this.ctx.fillStyle = fillColor;
+                    this.ctx.shadowColor = shadowColor;
+                    this.ctx.shadowBlur = shadowBlur;
+                    
+                    this.ctx.fillRect(
+                        screenX - this.ZOOM/2,
+                        screenY - this.ZOOM/2,
+                        this.ZOOM,
+                        this.ZOOM
+                    );
+                    
+                    this.ctx.shadowBlur = 0;
+                    
+                    // Icône levier
+                    this.ctx.fillStyle = 'white';
+                    this.ctx.font = `${this.ZOOM/2}px Arial`;
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText('🔀', screenX, screenY + 3);
+                });
             }
             
             renderParticles() {
@@ -1328,6 +1411,12 @@
                 this.game.checkpoints.forEach(checkpoint => {
                     checkpoint.activated = false;
                 });
+    
+                // Réinitialiser les leviers
+                this.game.levers.forEach(lever => {
+                    lever.activated = false;
+                });
+                this.game.grayBlocksActive = true;
     
                 // Reset du score et des vies
                 this.game.score = 0;
