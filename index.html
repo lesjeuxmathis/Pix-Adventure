@@ -408,9 +408,7 @@
                     BLUE: [0, 0, 255],       // Fin du niveau
                     CYAN: [0, 255, 255],     // Checkpoint
                     VIOLET: [255, 0, 255],   // Boost de saut
-                    WHITE: [255, 255, 255],   // Arrière-plan
-                    ORANGE: [255, 165, 0],
-                    GRAY: [128, 128, 128]
+                    WHITE: [255, 255, 255]   // Arrière-plan
                 };
 
                 // Système de traduction
@@ -452,9 +450,6 @@
                         mode: "🎮 Mode:",
                         perfect: "⭐ PARFAIT ! Toutes les pièces collectées !",
                         normal: "🎯 Normal"
-						leverActivated: "🔶 Levier activé ! Blocs gris désactivés !",
-                        leverDeactivated: "🔶 Levier désactivé ! Blocs gris réactivés !",
-                        mapColors2: "Vert=Spawn, Bleu=Fin, Cyan=Checkpoint, Violet=Boost, Orange=Levier, Gris=Désactivable"
                     },
                     en: {
                         title: "🎮 Pix'Adventure 🎨",
@@ -493,9 +488,6 @@
                         mode: "🎮 Mode:",
                         perfect: "⭐ PERFECT! All coins collected!",
                         normal: "🎯 Normal"
-						leverActivated: "🔶 Lever activated! Gray blocks disabled!",
-                        leverDeactivated: "🔶 Lever deactivated! Gray blocks reactivated!",
-                        mapColors2: "Green=Spawn, Blue=End, Cyan=Checkpoint, Purple=Boost, Orange=Lever, Gray=Deactivatable"
     }
 };
 
@@ -598,7 +590,6 @@
                         this.canvas.height = 600;
                     }
                 });
-            }
             }
 
             setupSkinColorPicker() {
@@ -787,17 +778,17 @@
                 }
             }
             
-                        initializeLevel() {
+            initializeLevel() {
+                // Reset du jeu
                 this.game.coins = [];
                 this.game.checkpoints = [];
-                this.game.levers = [];
-                this.game.grayBlocksDisabled = false;
                 this.game.score = 0;
                 this.game.lives = 3;
                 this.particles = [];
                 this.gameState.gameOver = false;
                 this.gameState.levelComplete = false;
                 
+                // Scan des éléments spéciaux
                 for (let y = 0; y < this.map.height; y++) {
                     for (let x = 0; x < this.map.width; x++) {
                         const color = this.getPixelColor(x, y);
@@ -816,13 +807,6 @@
                                 x: x * this.ZOOM,
                                 y: y * this.ZOOM,
                                 activated: false
-                            });
-                        } else if (this.colorMatches(color, this.COLORS.ORANGE)) {
-                            this.game.levers.push({
-                                x: x * this.ZOOM,
-                                y: y * this.ZOOM,
-                                activated: false,
-                                pulse: 0
                             });
                         }
                     }
@@ -860,8 +844,8 @@
                 this.updateParticles();
                 this.checkCollectibles();
                 this.checkSpecialTiles();
-                this.updateLevers();
                 
+                // Reset des touches pressées
                 this.keysPressed = {};
             }
             
