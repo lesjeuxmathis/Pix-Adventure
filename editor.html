@@ -259,6 +259,8 @@
                 <div class="tool-btn" data-tool="finish" style="background: blue;" title="Arrivée">🏁</div>
                 <div class="tool-btn" data-tool="checkpoint" style="background: cyan;" title="Checkpoint">🚩</div>
                 <div class="tool-btn" data-tool="boost" style="background: magenta;" title="Boost">⚡</div>
+                <div class="tool-btn" data-tool="lever" style="background: orange;" title="Levier">🔶</div>
+                <div class="tool-btn" data-tool="gray" style="background: gray;" title="Bloc désactivable">⬜</div>
                 <div class="tool-btn" data-tool="eraser" style="background: white;" title="Gomme">🧽</div>
             </div>
             
@@ -275,7 +277,7 @@
                 💾 Télécharger PNG
             </button>
             <button class="action-btn" onclick="editor.loadImage()" style="background: linear-gradient(45deg, #f39c12, #e67e22);" id="loadBtn">
-                📁 Charger Image
+                📂 Charger Image
             </button>
             <input type="file" id="imageLoader" accept="image/*" style="display: none;">
         </div>
@@ -310,6 +312,14 @@
                 <span id="legendBoost">⚡ Boost de saut (Violet)</span>
             </div>
             <div class="legend-item">
+                <div class="legend-color" style="background: orange;"></div>
+                <span id="legendLever">🔶 Levier (Orange)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: gray;"></div>
+                <span id="legendGray">⬜ Bloc désactivable (Gris)</span>
+            </div>
+            <div class="legend-item">
                 <div class="legend-color" style="background: white;"></div>
                 <span id="legendEraser">🧽 Arrière-plan (Blanc)</span>
             </div>
@@ -320,12 +330,13 @@
                 💡 Cliquez pour placer, maintenez et glissez pour dessiner en continu
                 <br>
                 🖱️ Restez appuyé et bougez la souris pour placer plusieurs couleurs d'affilée
+                <br>
+                🔶 Le levier orange désactive les blocs gris quand on le touche
             </div>
         </div>
     </div>
 
     <script>
-        // Système de traduction
         const translations = {
             fr: {
                 pageTitle: "🎨 Éditeur de Niveaux",
@@ -335,7 +346,7 @@
                 clearBtn: "🗑️ Vider",
                 fillBtn: "⬛ Remplir",
                 downloadBtn: "💾 Télécharger PNG",
-                loadBtn: "📁 Charger Image",
+                loadBtn: "📂 Charger Image",
                 legendWall: "🧱 Mur/Sol (Noir)",
                 legendCoin: "🪙 Pièce (Jaune)",
                 legendDeath: "💀 Mort (Rouge)",
@@ -343,8 +354,10 @@
                 legendFinish: "🏁 Arrivée (Bleu)",
                 legendCheckpoint: "🚩 Checkpoint (Cyan)",
                 legendBoost: "⚡ Boost de saut (Violet)",
+                legendLever: "🔶 Levier (Orange)",
+                legendGray: "⬜ Bloc désactivable (Gris)",
                 legendEraser: "🧽 Arrière-plan (Blanc)",
-                infoText: "💡 Cliquez pour placer, maintenez et glissez pour dessiner en continu<br>🖱️ Restez appuyé et bougez la souris pour placer plusieurs couleurs d'affilée",
+                infoText: "💡 Cliquez pour placer, maintenez et glissez pour dessiner en continu<br>🖱️ Restez appuyé et bougez la souris pour placer plusieurs couleurs d'affilée<br>🔶 Le levier orange désactive les blocs gris quand on le touche",
                 tooltips: {
                     wall: "Mur",
                     coin: "Pièce",
@@ -353,6 +366,8 @@
                     finish: "Arrivée",
                     checkpoint: "Checkpoint",
                     boost: "Boost",
+                    lever: "Levier",
+                    gray: "Bloc désactivable",
                     eraser: "Gomme"
                 }
             },
@@ -364,7 +379,7 @@
                 clearBtn: "🗑️ Clear",
                 fillBtn: "⬛ Fill",
                 downloadBtn: "💾 Download PNG",
-                loadBtn: "📁 Load Image",
+                loadBtn: "📂 Load Image",
                 legendWall: "🧱 Wall/Ground (Black)",
                 legendCoin: "🪙 Coin (Yellow)",
                 legendDeath: "💀 Death (Red)",
@@ -372,8 +387,10 @@
                 legendFinish: "🏁 Finish (Blue)",
                 legendCheckpoint: "🚩 Checkpoint (Cyan)",
                 legendBoost: "⚡ Jump boost (Purple)",
+                legendLever: "🔶 Lever (Orange)",
+                legendGray: "⬜ Deactivatable block (Gray)",
                 legendEraser: "🧽 Background (White)",
-                infoText: "💡 Click to place, hold and drag to draw continuously<br>🖱️ Hold down and move mouse to place multiple colors in a row",
+                infoText: "💡 Click to place, hold and drag to draw continuously<br>🖱️ Hold down and move mouse to place multiple colors in a row<br>🔶 Orange lever disables gray blocks when touched",
                 tooltips: {
                     wall: "Wall",
                     coin: "Coin",
@@ -382,6 +399,8 @@
                     finish: "Finish",
                     checkpoint: "Checkpoint",
                     boost: "Boost",
+                    lever: "Lever",
+                    gray: "Deactivatable block",
                     eraser: "Eraser"
                 }
             }
@@ -394,21 +413,12 @@
             }
 
             detectLanguage() {
-                // Vérifier si une langue est sauvegardée
-                const savedLang = localStorage.getItem('pixadventure-language');
-                if (savedLang && translations[savedLang]) {
-                    return savedLang;
-                }
-
-                // Détecter la langue du navigateur
                 const browserLang = navigator.language || navigator.userLanguage;
                 if (browserLang.startsWith('fr')) {
                     return 'fr';
                 } else if (browserLang.startsWith('en')) {
                     return 'en';
                 }
-
-                // Langue par défaut
                 return 'fr';
             }
 
@@ -426,7 +436,6 @@
             setLanguage(lang) {
                 if (translations[lang]) {
                     this.currentLanguage = lang;
-                    localStorage.setItem('pixadventure-language', lang);
                     this.updateUI();
                 }
             }
@@ -434,7 +443,6 @@
             updateUI() {
                 const t = translations[this.currentLanguage];
                 
-                // Mettre à jour les éléments de l'interface
                 document.getElementById('pageTitle').textContent = t.pageTitle;
                 document.getElementById('gameBtn').textContent = t.gameBtn;
                 document.getElementById('sizeLabel').textContent = t.sizeLabel;
@@ -444,7 +452,6 @@
                 document.getElementById('downloadBtn').textContent = t.downloadBtn;
                 document.getElementById('loadBtn').textContent = t.loadBtn;
                 
-                // Légende
                 document.getElementById('legendWall').textContent = t.legendWall;
                 document.getElementById('legendCoin').textContent = t.legendCoin;
                 document.getElementById('legendDeath').textContent = t.legendDeath;
@@ -452,12 +459,12 @@
                 document.getElementById('legendFinish').textContent = t.legendFinish;
                 document.getElementById('legendCheckpoint').textContent = t.legendCheckpoint;
                 document.getElementById('legendBoost').textContent = t.legendBoost;
+                document.getElementById('legendLever').textContent = t.legendLever;
+                document.getElementById('legendGray').textContent = t.legendGray;
                 document.getElementById('legendEraser').textContent = t.legendEraser;
                 
-                // Texte d'information
                 document.getElementById('infoText').innerHTML = t.infoText;
                 
-                // Tooltips des outils
                 document.querySelectorAll('.tool-btn').forEach(btn => {
                     const tool = btn.dataset.tool;
                     if (tool && t.tooltips[tool]) {
@@ -465,7 +472,6 @@
                     }
                 });
 
-                // Mettre à jour la langue du document
                 document.documentElement.lang = this.currentLanguage;
             }
 
@@ -492,6 +498,8 @@
                     finish: [0, 0, 255],
                     checkpoint: [0, 255, 255],
                     boost: [255, 0, 255],
+                    lever: [255, 165, 0],
+                    gray: [128, 128, 128],
                     eraser: [255, 255, 255]
                 };
                 
@@ -509,7 +517,6 @@
             }
             
             setupEventListeners() {
-                // Sélection d'outil
                 document.querySelectorAll('.tool-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         document.querySelector('.tool-btn.active')?.classList.remove('active');
@@ -518,7 +525,6 @@
                     });
                 });
                 
-                // Dessin sur canvas - Souris
                 this.canvas.addEventListener('mousedown', (e) => {
                     this.isDrawing = true;
                     this.lastDrawnCell = { x: -1, y: -1 };
@@ -542,7 +548,6 @@
                     this.lastDrawnCell = { x: -1, y: -1 };
                 });
                 
-                // Support tactile pour mobile
                 this.canvas.addEventListener('touchstart', (e) => {
                     this.isDrawing = true;
                     this.lastDrawnCell = { x: -1, y: -1 };
@@ -572,12 +577,10 @@
                     this.lastDrawnCell = { x: -1, y: -1 };
                 });
                 
-                // Empêcher le menu contextuel sur le canvas
                 this.canvas.addEventListener('contextmenu', (e) => {
                     e.preventDefault();
                 });
                 
-                // Chargement d'image
                 this.imageLoader.addEventListener('change', (e) => {
                     this.loadImageFile(e.target.files[0]);
                 });
@@ -590,7 +593,6 @@
                 this.canvas.width = this.width * this.CELL_SIZE;
                 this.canvas.height = this.height * this.CELL_SIZE;
                 
-                // Initialiser la grille avec du blanc
                 this.grid = Array(this.height).fill().map(() => 
                     Array(this.width).fill([255, 255, 255])
                 );
@@ -603,9 +605,7 @@
                 const x = Math.floor((e.clientX - rect.left) / this.CELL_SIZE);
                 const y = Math.floor((e.clientY - rect.top) / this.CELL_SIZE);
                 
-                // Vérifier si on est dans les limites et si on n'a pas déjà dessiné cette cellule
                 if (x >= 0 && x < this.width && y >= 0 && y < this.height) {
-                    // Éviter de redessiner la même cellule plusieurs fois
                     if (this.lastDrawnCell.x !== x || this.lastDrawnCell.y !== y) {
                         this.grid[y][x] = [...this.tools[this.currentTool]];
                         this.lastDrawnCell = { x, y };
@@ -619,7 +619,6 @@
                 this.ctx.fillStyle = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
                 this.ctx.fillRect(x * this.CELL_SIZE, y * this.CELL_SIZE, this.CELL_SIZE, this.CELL_SIZE);
                 
-                // Grille
                 this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
                 this.ctx.lineWidth = 1;
                 this.ctx.strokeRect(x * this.CELL_SIZE, y * this.CELL_SIZE, this.CELL_SIZE, this.CELL_SIZE);
@@ -651,13 +650,11 @@
             }
             
             download() {
-                // Créer un canvas temporaire à la taille exacte
                 const tempCanvas = document.createElement('canvas');
                 const tempCtx = tempCanvas.getContext('2d');
                 tempCanvas.width = this.width;
                 tempCanvas.height = this.height;
                 
-                // Dessiner pixel par pixel
                 const imageData = tempCtx.createImageData(this.width, this.height);
                 
                 for (let y = 0; y < this.height; y++) {
@@ -665,16 +662,15 @@
                         const pixelIndex = (y * this.width + x) * 4;
                         const color = this.grid[y][x];
                         
-                        imageData.data[pixelIndex] = color[0];     // R
-                        imageData.data[pixelIndex + 1] = color[1]; // G
-                        imageData.data[pixelIndex + 2] = color[2]; // B
-                        imageData.data[pixelIndex + 3] = 255;      // A
+                        imageData.data[pixelIndex] = color[0];
+                        imageData.data[pixelIndex + 1] = color[1];
+                        imageData.data[pixelIndex + 2] = color[2];
+                        imageData.data[pixelIndex + 3] = 255;
                     }
                 }
                 
                 tempCtx.putImageData(imageData, 0, 0);
                 
-                // Télécharger
                 const link = document.createElement('a');
                 link.download = `level_${this.width}x${this.height}_${Date.now()}.png`;
                 link.href = tempCanvas.toDataURL();
@@ -690,7 +686,6 @@
                 
                 const img = new Image();
                 img.onload = () => {
-                    // Redimensionner la grille selon l'image
                     this.width = img.width;
                     this.height = img.height;
                     
@@ -700,7 +695,6 @@
                     this.canvas.width = this.width * this.CELL_SIZE;
                     this.canvas.height = this.height * this.CELL_SIZE;
                     
-                    // Extraire les couleurs de l'image
                     const tempCanvas = document.createElement('canvas');
                     const tempCtx = tempCanvas.getContext('2d');
                     tempCanvas.width = img.width;
@@ -729,7 +723,6 @@
             }
         }
         
-        // Démarrage de l'application
         window.addEventListener('load', () => {
             window.languageManager = new LanguageManager();
             window.editor = new LevelEditor();
