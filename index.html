@@ -11,9 +11,7 @@
             box-sizing: border-box;
         }
 
-
-
-        .end-screen {
+        .end-screen, .game-over-screen {
             position: fixed;
             top: 0;
             left: 0;
@@ -26,6 +24,10 @@
             align-items: center;
             z-index: 10000;
             animation: fadeIn 1s ease-in;
+        }
+
+        .game-over-screen {
+            background: linear-gradient(45deg, #2c0b0b, #3e0e0e, #5e1a1a);
         }
 
         @keyframes fadeIn {
@@ -47,9 +49,23 @@
             animation: glow 2s infinite alternate;
         }
 
+        .game-over-screen .end-title {
+            color: #e74c3c;
+            text-shadow: 0 0 20px rgba(231, 76, 60, 0.8);
+        }
+
         @keyframes glow {
             from { text-shadow: 0 0 20px rgba(74, 144, 226, 0.8); }
             to { text-shadow: 0 0 30px rgba(74, 144, 226, 1), 0 0 40px rgba(74, 144, 226, 0.6); }
+        }
+
+        .game-over-screen .end-title {
+            animation: glowRed 2s infinite alternate;
+        }
+
+        @keyframes glowRed {
+            from { text-shadow: 0 0 20px rgba(231, 76, 60, 0.8); }
+            to { text-shadow: 0 0 30px rgba(231, 76, 60, 1), 0 0 40px rgba(231, 76, 60, 0.6); }
         }
 
         .end-stats {
@@ -91,8 +107,6 @@
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         }
 
-
-
         .ui-controls {
             display: flex;
             gap: 10px;
@@ -129,7 +143,6 @@
         .sandbox-btn.active {
             background: linear-gradient(45deg, #27ae60, #2ecc71);
         }
-
 
         body {
             background: linear-gradient(135deg, #1a1a2e, #16213e);
@@ -236,7 +249,7 @@
             margin-bottom: 5px;
         }
 
-                .fullscreen-btn {
+        .fullscreen-btn {
             position: absolute;
             top: 20px;
             right: 20px;
@@ -277,7 +290,6 @@
             max-height: 70vh;
         }
 
-
         .debug-info {
             position: absolute;
             top: 10px;
@@ -305,8 +317,9 @@
         .pulsing {
             animation: pulse 1s infinite;
         }
+
         .language-selector {
-             position: absolute;
+            position: absolute;
             top: 20px;
             left: 20px;
             z-index: 1000;
@@ -320,18 +333,18 @@
             padding: 8px 12px;
             font-family: 'Courier New', monospace;
             font-size: 12px;
-    cursor: pointer;
-        }        
+            cursor: pointer;
+        }
 
-.language-select option {
-    background: #1a1a2e;
-    color: white;
-}
+        .language-select option {
+            background: #1a1a2e;
+            color: white;
+        }
     </style>
 </head>
 <body>
     <div class="game-container">
-         <button id="fullscreenBtn" class="fullscreen-btn">🔳 Plein Écran</button>
+        <button id="fullscreenBtn" class="fullscreen-btn">🔳 Plein Écran</button>
         <div class="language-selector">
             <select id="languageSelect" class="language-select">
                 <option value="fr">🇫🇷 Français</option>
@@ -347,34 +360,40 @@
             <label for="mapFile" class="file-label">📁 Charger une Map</label>
         </div>
 
-
         <div id="endScreen" class="end-screen">
-        <div class="end-content">
-            <div class="end-title">🎉 VICTOIRE ! 🎉</div>
-            <div class="end-stats" id="endStats"></div>
-            <div class="end-buttons">
-                <button class="end-btn restart-btn" onclick="game.restartFromEndScreen()">
-                🔄 Rejouer
-                </button>
-                <button class="end-btn new-map-btn" onclick="game.loadNewMap()">
-                📁 Nouvelle Map
-                </button>
+            <div class="end-content">
+                <div class="end-title">🎉 VICTOIRE ! 🎉</div>
+                <div class="end-stats" id="endStats"></div>
+                <div class="end-buttons">
+                    <button class="end-btn restart-btn" onclick="game.restartFromEndScreen()">🔄 Rejouer</button>
+                    <button class="end-btn new-map-btn" onclick="game.loadNewMap()">📁 Nouvelle Map</button>
+                </div>
             </div>
         </div>
-    </div>
+
+        <div id="gameOverScreen" class="game-over-screen">
+            <div class="end-content">
+                <div class="end-title">💀 GAME OVER 💀</div>
+                <div class="end-stats" id="gameOverStats"></div>
+                <div class="end-buttons">
+                    <button class="end-btn restart-btn" onclick="game.restartFromGameOver()">🔄 Rejouer</button>
+                    <button class="end-btn new-map-btn" onclick="game.loadNewMap()">📁 Nouvelle Map</button>
+                </div>
+            </div>
+        </div>
 
         <canvas id="gameCanvas" width="800" height="600"></canvas>
 
         <div class="ui-panel">
-          <div class="ui-item score">💰 Score: <span id="score">0</span></div>
-          <div class="ui-controls">
+            <div class="ui-item score">💰 Score: <span id="score">0</span></div>
+            <div class="ui-controls">
                 <input type="color" id="skinColorPicker" value="#ff6b6b" title="Couleur du skin">
-               <button id="sandboxBtn" class="sandbox-btn">🏖️ Bac à sable</button>
-              <button id="editorBtn" class="sandbox-btn">🎨 Éditeur</button>
+                <button id="sandboxBtn" class="sandbox-btn">🏖️ Bac à sable</button>
+                <button id="editorBtn" class="sandbox-btn">🎨 Éditeur</button>
+            </div>
+            <div class="ui-item message" id="gameMessage"></div>
+            <div class="ui-item lives">❤️ Vies: <span id="lives">3</span></div>
         </div>
-    <div class="ui-item message" id="gameMessage"></div>
-    <div class="ui-item lives">❤️ Vies: <span id="lives">3</span></div>
-</div>
 
         <div class="controls">
             <div class="controls-title">🎯 CONTRÔLES</div>
@@ -391,14 +410,14 @@
                 this.canvas = document.getElementById('gameCanvas');
                 this.ctx = this.canvas.getContext('2d');
                 this.fileInput = document.getElementById('mapFile');
-                
+
                 // Configuration
                 this.ZOOM = 20;
                 this.GRAVITY = 0.5;
                 this.JUMP_FORCE = -8;
                 this.MOVE_SPEED = 3;
                 this.MAX_FALL_SPEED = 15;
-                
+
                 // Couleurs de la map avec tolérance améliorée
                 this.COLORS = {
                     BLACK: [0, 0, 0],        // Mur/Sol
@@ -435,7 +454,8 @@
                         victory: "🎉 VICTOIRE ! 🎉",
                         restart: "🔄 Rejouer",
                         newMap: "📁 Nouvelle Map",
-                        gameOver: "💀 GAME OVER ! Appuyez sur R pour recommencer",
+                        gameOver: "💀 GAME OVER !",
+                        gameOverMessage: "💀 GAME OVER ! Appuyez sur R pour recommencer",
                         respawn: "💀 Respawn !",
                         checkpoint: "🏁 Checkpoint activé !",
                         jumpBoost: "⚡ Boost de saut activé !",
@@ -474,7 +494,8 @@
                         victory: "🎉 VICTORY! 🎉",
                         restart: "🔄 Play Again",
                         newMap: "📁 New Map",
-                        gameOver: "💀 GAME OVER! Press R to restart",
+                        gameOver: "💀 GAME OVER!",
+                        gameOverMessage: "💀 GAME OVER! Press R to restart",
                         respawn: "💀 Respawn!",
                         checkpoint: "🏁 Checkpoint activated!",
                         jumpBoost: "⚡ Jump boost activated!",
@@ -492,11 +513,11 @@
                         perfect: "⭐ PERFECT! All coins collected!",
                         normal: "🎯 Normal",
                         leverActivated: "🔶 Lever activated! Gray blocks deactivated"
-    }
-};
+                    }
+                };
 
                 this.currentLanguage = 'fr';
-                
+
                 // État du jeu
                 this.gameState = {
                     loaded: false,
@@ -506,7 +527,7 @@
                     debugMode: false,
                     sandboxMode: false
                 };
-                
+
                 // Map
                 this.map = {
                     data: null,
@@ -514,7 +535,7 @@
                     height: 0,
                     image: null
                 };
-                
+
                 // Joueur
                 this.player = {
                     x: 100,
@@ -528,7 +549,7 @@
                     color: '#ff6b6b',
                     trail: []
                 };
-                
+
                 // Jeu
                 this.game = {
                     score: 0,
@@ -540,17 +561,17 @@
                     lastCheckpoint: null,
                     camera: { x: 0, y: 0 }
                 };
-                
+
                 // Contrôles
                 this.keys = {};
                 this.keysPressed = {};
-                
+
                 // Particules
                 this.particles = [];
-                
+
                 this.init();
             }
-            
+
             init() {
                 this.fileInput.addEventListener('change', (e) => this.loadMap(e));
                 this.setupControls();
@@ -562,7 +583,7 @@
                 this.loadDefaultMap();
                 this.gameLoop();
             }
-            
+
             async loadDefaultMap() {
                 try {
                     const response = await fetch('Exemple/map.png');
@@ -573,45 +594,38 @@
                     this.initializeLevel();
                     this.gameState.loaded = true;
                     this.showMessage(this.t('mapLoaded'));
-                    
-                    document.getElementById('mapInfo').textContent = 
+
+                    document.getElementById('mapInfo').textContent =
                         `Map: ${this.map.width}x${this.map.height} pixels`;
                 } catch (error) {
                     console.error('Erreur lors du chargement de la map par défaut:', error);
                     this.showMessage(this.t('loadError'));
-                    this.showMessage(this.t('startMessage')); // Afficher le message de bienvenue si erreur
+                    this.showMessage(this.t('startMessage'));
                 }
             }
-            
+
             setupFullscreen() {
                 const fullscreenBtn = document.getElementById('fullscreenBtn');
                 const gameContainer = document.querySelector('.game-container');
-                
+
                 fullscreenBtn.addEventListener('click', () => {
                     if (!gameContainer.classList.contains('fullscreen')) {
-                        // Entrer en plein écran
                         gameContainer.classList.add('fullscreen');
-                        fullscreenBtn.textContent = '🔲 Quitter';
-                        
-                        // Redimensionner le canvas
+                        fullscreenBtn.textContent = this.t('exitFullscreen');
                         this.canvas.width = Math.min(window.innerWidth * 0.9, 1200);
                         this.canvas.height = Math.min(window.innerHeight * 0.7, 800);
                     } else {
-                        // Sortir du plein écran
                         gameContainer.classList.remove('fullscreen');
-                        fullscreenBtn.textContent = '🔳 Plein Écran';
-                        
-                        // Restaurer la taille originale
+                        fullscreenBtn.textContent = this.t('fullscreen');
                         this.canvas.width = 800;
                         this.canvas.height = 600;
                     }
                 });
-                
-                // Gérer la touche Échap pour sortir du plein écran
+
                 document.addEventListener('keydown', (e) => {
                     if (e.key === 'Escape' && gameContainer.classList.contains('fullscreen')) {
                         gameContainer.classList.remove('fullscreen');
-                        fullscreenBtn.textContent = '🔳 Plein Écran';
+                        fullscreenBtn.textContent = this.t('fullscreen');
                         this.canvas.width = 800;
                         this.canvas.height = 600;
                     }
@@ -620,33 +634,32 @@
 
             setupSkinColorPicker() {
                 const colorPicker = document.getElementById('skinColorPicker');
-               colorPicker.addEventListener('change', (e) => {
-                  this.player.color = e.target.value;
-               });
+                colorPicker.addEventListener('change', (e) => {
+                    this.player.color = e.target.value;
+                });
             }
 
             setupSandboxMode() {
                 const sandboxBtn = document.getElementById('sandboxBtn');
-              sandboxBtn.addEventListener('click', () => {
-                  this.gameState.sandboxMode = !this.gameState.sandboxMode;
-        
-                 if (this.gameState.sandboxMode) {
-                    sandboxBtn.textContent = '🏖️ Mode Normal';
-                    sandboxBtn.classList.add('active');
-                    this.game.lives = 999;
-                    this.showMessage('🏖️ Mode Bac à Sable activé - Vies infinies !');
-                } else {
-                   sandboxBtn.textContent = '🏖️ Bac à sable';
-                   sandboxBtn.classList.remove('active');
-                   this.game.lives = 3;
-                   this.playerDeath();
-                   this.showMessage('🎮 Mode Normal activé');
-                }
-        
-                this.updateUI();
-               });
-           }
+                sandboxBtn.addEventListener('click', () => {
+                    this.gameState.sandboxMode = !this.gameState.sandboxMode;
 
+                    if (this.gameState.sandboxMode) {
+                        sandboxBtn.textContent = this.t('sandboxActive');
+                        sandboxBtn.classList.add('active');
+                        this.game.lives = 999;
+                        this.showMessage(this.t('sandboxActivated'));
+                    } else {
+                        sandboxBtn.textContent = this.t('sandbox');
+                        sandboxBtn.classList.remove('active');
+                        this.game.lives = 3;
+                        this.playerDeath();
+                        this.showMessage(this.t('normalMode'));
+                    }
+
+                    this.updateUI();
+                });
+            }
 
             setupEditor() {
                 const editorBtn = document.getElementById('editorBtn');
@@ -657,18 +670,12 @@
 
             setupLanguage() {
                 const languageSelect = document.getElementById('languageSelect');
-    
-                // Détecter la langue du navigateur
                 const browserLang = navigator.language.split('-')[0];
                 if (browserLang === 'en' || browserLang === 'fr') {
                     this.currentLanguage = browserLang;
                     languageSelect.value = browserLang;
                 }
-    
-                // Appliquer la langue initiale
                 this.updateLanguage();
-    
-                // Événement de changement de langue
                 languageSelect.addEventListener('change', (e) => {
                     this.currentLanguage = e.target.value;
                     this.updateLanguage();
@@ -677,8 +684,6 @@
 
             updateLanguage() {
                 const t = this.TRANSLATIONS[this.currentLanguage];
-    
-                // Mettre à jour les éléments HTML
                 document.querySelector('h1').textContent = t.title;
                 document.querySelector('.file-label').textContent = t.loadMap;
                 document.getElementById('fullscreenBtn').textContent = t.fullscreen;
@@ -691,8 +696,8 @@
                 document.querySelector('.controls div:nth-child(3)').textContent = t.controlsText2;
                 document.querySelector('.end-btn.restart-btn').innerHTML = `🔄 ${t.restart}`;
                 document.querySelector('.end-btn.new-map-btn').innerHTML = `📁 ${t.newMap}`;
-    
-                // Mettre à jour mapInfo si pas de map chargée
+                document.querySelector('#gameOverScreen .end-btn.restart-btn').innerHTML = `🔄 ${t.restart}`;
+                document.querySelector('#gameOverScreen .end-btn.new-map-btn').innerHTML = `📁 ${t.newMap}`;
                 if (!this.gameState.loaded) {
                     document.getElementById('mapInfo').textContent = t.mapInfo;
                 }
@@ -702,57 +707,50 @@
                 return this.TRANSLATIONS[this.currentLanguage][key] || key;
             }
 
-            
-            
             setupControls() {
                 document.addEventListener('keydown', (e) => {
                     this.keys[e.key.toLowerCase()] = true;
                     this.keysPressed[e.key.toLowerCase()] = true;
-                    
-                    // Empêcher le défilement avec les touches de jeu
-                    if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'ArrowDown' || 
+
+                    if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'ArrowDown' ||
                         e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
                         e.preventDefault();
                     }
 
-
-                    // Toggle debug mode avec F12
                     if (e.key === 'F12') {
                         e.preventDefault();
                         this.toggleDebug();
                     }
 
-
                     if (e.key.toLowerCase() === 'r' && this.gameState.loaded) {
-                        this.playerDeath();
+                        this.restartFromGameOver();
                     }
                 });
-                
+
                 document.addEventListener('keyup', (e) => {
                     this.keys[e.key.toLowerCase()] = false;
                 });
             }
-            
+
             async loadMap(event) {
                 const file = event.target.files[0];
                 if (!file) return;
-                
+
                 try {
                     const img = await this.loadImage(file);
                     await this.processMapImage(img);
                     this.initializeLevel();
                     this.gameState.loaded = true;
-                    this.showMessage("Map chargée ! Bonne chance !");
-                    
-                    document.getElementById('mapInfo').textContent = 
+                    this.showMessage(this.t('mapLoaded'));
+
+                    document.getElementById('mapInfo').textContent =
                         `Map: ${this.map.width}x${this.map.height} pixels`;
-                        
                 } catch (error) {
                     console.error('Erreur lors du chargement:', error);
-                    this.showMessage("Erreur lors du chargement de la map !");
+                    this.showMessage(this.t('loadError'));
                 }
             }
-            
+
             loadImage(file) {
                 return new Promise((resolve, reject) => {
                     const img = new Image();
@@ -761,33 +759,32 @@
                     img.src = URL.createObjectURL(file);
                 });
             }
-            
+
             async processMapImage(img) {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 canvas.width = img.width;
                 canvas.height = img.height;
                 ctx.drawImage(img, 0, 0);
-                
+
                 this.map.data = ctx.getImageData(0, 0, img.width, img.height);
                 this.map.width = img.width;
                 this.map.height = img.height;
                 this.map.image = img;
-                
+
                 this.analyzeMap();
             }
-            
+
             analyzeMap() {
                 const colors = {};
                 let spawnFound = false;
-                
+
                 for (let y = 0; y < this.map.height; y++) {
                     for (let x = 0; x < this.map.width; x++) {
                         const color = this.getPixelColor(x, y);
                         const key = `${color[0]},${color[1]},${color[2]}`;
                         colors[key] = (colors[key] || 0) + 1;
-                        
-                        // Chercher le point de spawn
+
                         if (this.colorMatches(color, this.COLORS.GREEN) && !spawnFound) {
                             this.player.x = x * this.ZOOM;
                             this.player.y = y * this.ZOOM;
@@ -795,7 +792,7 @@
                         }
                     }
                 }
-                
+
                 if (this.gameState.debugMode) {
                     console.log('=== ANALYSE DE LA MAP ===');
                     console.log(`Taille: ${this.map.width}x${this.map.height}`);
@@ -803,24 +800,22 @@
                     console.log('Point de spawn:', spawnFound ? 'Trouvé' : 'Non trouvé');
                 }
             }
-            
+
             initializeLevel() {
-                // Reset du jeu
                 this.game.coins = [];
                 this.game.checkpoints = [];
                 this.game.levers = [];
                 this.game.grayBlocksActive = true;
                 this.game.score = 0;
-                this.game.lives = 3;
+                this.game.lives = this.gameState.sandboxMode ? 999 : 3;
                 this.particles = [];
                 this.gameState.gameOver = false;
                 this.gameState.levelComplete = false;
-                
-                // Scan des éléments spéciaux
+
                 for (let y = 0; y < this.map.height; y++) {
                     for (let x = 0; x < this.map.width; x++) {
                         const color = this.getPixelColor(x, y);
-                        
+
                         if (this.colorMatches(color, this.COLORS.GREEN)) {
                             this.game.lastCheckpoint = { x: x * this.ZOOM, y: y * this.ZOOM };
                         } else if (this.colorMatches(color, this.COLORS.YELLOW)) {
@@ -846,15 +841,15 @@
                         }
                     }
                 }
-                
+
                 this.updateUI();
             }
-            
+
             getPixelColor(x, y) {
                 if (!this.map.data || x < 0 || y < 0 || x >= this.map.width || y >= this.map.height) {
                     return [0, 0, 0];
                 }
-                
+
                 const index = (y * this.map.width + x) * 4;
                 return [
                     this.map.data.data[index],
@@ -862,62 +857,55 @@
                     this.map.data.data[index + 2]
                 ];
             }
-            
+
             colorMatches(color1, color2, tolerance = 30) {
                 return Math.abs(color1[0] - color2[0]) <= tolerance &&
                        Math.abs(color1[1] - color2[1]) <= tolerance &&
                        Math.abs(color1[2] - color2[2]) <= tolerance;
             }
-            
+
             update() {
-                if (!this.gameState.loaded || this.gameState.paused || this.gameState.gameOver) {
+                if (!this.gameState.loaded || this.gameState.paused || this.gameState.gameOver || this.gameState.levelComplete) {
                     return;
                 }
-                
+
                 this.updatePlayer();
                 this.updateCamera();
                 this.updateParticles();
                 this.checkCollectibles();
                 this.checkSpecialTiles();
-                
-                // Reset des touches pressées
+
                 this.keysPressed = {};
             }
-            
+
             updatePlayer() {
                 const wasOnGround = this.player.onGround;
-                
-                // Mouvement horizontal
-                if (this.keys['arrowleft'] || this.keys['d']) {
+
+                if (this.keys['arrowleft'] || this.keys['a']) {
                     this.player.vx = -this.MOVE_SPEED;
-                } else if (this.keys['arrowright'] || this.keys['q']) {
+                } else if (this.keys['arrowright'] || this.keys['d']) {
                     this.player.vx = this.MOVE_SPEED;
                 } else {
-                    this.player.vx *= 0.8; // Friction
+                    this.player.vx *= 0.8;
                 }
-                
-                // Saut
-                if ((this.keys[' '] || this.keys['arrowup'] || this.keys['z']) && this.player.onGround) {
+
+                if ((this.keys[' '] || this.keys['arrowup'] || this.keys['w']) && this.player.onGround) {
                     this.player.vy = this.JUMP_FORCE - this.player.jumpBoost;
                     this.player.jumpBoost = 0;
                     this.player.onGround = false;
                     this.addParticles(this.player.x + this.player.width/2, this.player.y + this.player.height, 5, this.player.color);
-                    this.addParticles(this.player.x + this.player.width/2, this.player.y + this.player.height, 3, this.player.color);
                 }
-                
-                // Gravité
+
                 this.player.vy += this.GRAVITY;
                 this.player.vy = Math.min(this.player.vy, this.MAX_FALL_SPEED);
-                
-                // Collision horizontale
+
                 const newX = this.player.x + this.player.vx;
                 if (!this.checkCollision(newX, this.player.y, this.player.width, this.player.height)) {
                     this.player.x = newX;
                 } else {
                     this.player.vx = 0;
                 }
-                
-                // Collision verticale
+
                 const newY = this.player.y + this.player.vy;
                 if (!this.checkCollision(this.player.x, newY, this.player.width, this.player.height)) {
                     this.player.y = newY;
@@ -931,105 +919,98 @@
                     }
                     this.player.vy = 0;
                 }
-                
-                // Trail du joueur
+
                 this.player.trail.push({
                     x: this.player.x + this.player.width/2,
                     y: this.player.y + this.player.height/2,
                     time: Date.now()
                 });
-                
+
                 this.player.trail = this.player.trail.filter(p => Date.now() - p.time < 200);
             }
-            
+
             checkCollision(x, y, width, height) {
-            const x1 = Math.floor(x / this.ZOOM);
-            const y1 = Math.floor(y / this.ZOOM);
-            const x2 = Math.floor((x + width - 1) / this.ZOOM);
-            const y2 = Math.floor((y + height - 1) / this.ZOOM);
-             
-            for (let my = y1; my <= y2; my++) {
-                for (let mx = x1; mx <= x2; mx++) {
-                    const color = this.getPixelColor(mx, my);
-                if (this.colorMatches(color, this.COLORS.BLACK) || 
-                    this.colorMatches(color, this.COLORS.VIOLET) ||
-                    (this.colorMatches(color, this.COLORS.GRAY) && this.game.grayBlocksActive)) {
-                   return true;
-               }
-        }
-    }
-    return false;
-}  
-            
+                const x1 = Math.floor(x / this.ZOOM);
+                const y1 = Math.floor(y / this.ZOOM);
+                const x2 = Math.floor((x + width - 1) / this.ZOOM);
+                const y2 = Math.floor((y + height - 1) / this.ZOOM);
+
+                for (let my = y1; my <= y2; my++) {
+                    for (let mx = x1; mx <= x2; mx++) {
+                        const color = this.getPixelColor(mx, my);
+                        if (this.colorMatches(color, this.COLORS.BLACK) ||
+                            this.colorMatches(color, this.COLORS.VIOLET) ||
+                            (this.colorMatches(color, this.COLORS.GRAY) && this.game.grayBlocksActive)) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+
             checkSpecialTiles() {
                 const centerX = Math.floor((this.player.x + this.player.width / 2) / this.ZOOM);
                 const centerY = Math.floor((this.player.y + this.player.height / 2) / this.ZOOM);
                 const bottomY = Math.floor((this.player.y + this.player.height) / this.ZOOM);
-                
+
                 const currentColor = this.getPixelColor(centerX, centerY);
                 const groundColor = this.getPixelColor(centerX, bottomY);
-                
-                // Mort (rouge)
+
                 if (this.colorMatches(currentColor, this.COLORS.RED)) {
                     this.playerDeath();
                     return;
                 }
-                
-                // Fin du niveau (bleu)
+
                 if (this.colorMatches(currentColor, this.COLORS.BLUE)) {
                     this.levelComplete();
                     return;
                 }
-                
-                // Boost de saut (violet) - détection améliorée
-                if (this.colorMatches(currentColor, this.COLORS.VIOLET) || 
+
+                if (this.colorMatches(currentColor, this.COLORS.VIOLET) ||
                     this.colorMatches(groundColor, this.COLORS.VIOLET)) {
                     this.player.jumpBoost = 5;
                     this.addParticles(this.player.x + this.player.width/2, this.player.y + this.player.height, 3, '#ff00ff');
-                    this.showMessage('⚡ Boost de saut activé !', 1000);
-}
+                    this.showMessage(this.t('jumpBoost'), 1000);
+                }
             }
-            
+
             checkCollectibles() {
-                // Pièces
                 this.game.coins.forEach(coin => {
                     if (!coin.collected) {
                         const dx = this.player.x + this.player.width/2 - coin.x;
                         const dy = this.player.y + this.player.height/2 - coin.y;
                         const distance = Math.sqrt(dx*dx + dy*dy);
-                        
+
                         if (distance < this.ZOOM * 0.6) {
                             coin.collected = true;
                             this.game.score += 100;
                             this.addParticles(coin.x, coin.y, 10, '#ffd700');
                             this.updateUI();
                         }
-                        
+
                         coin.pulse += 0.1;
                     }
                 });
-                
-                // Checkpoints
+
                 this.game.checkpoints.forEach(checkpoint => {
                     if (!checkpoint.activated) {
                         const dx = this.player.x + this.player.width/2 - checkpoint.x - this.ZOOM/2;
                         const dy = this.player.y + this.player.height/2 - checkpoint.y - this.ZOOM/2;
-                        
+
                         if (Math.abs(dx) < this.ZOOM && Math.abs(dy) < this.ZOOM) {
                             checkpoint.activated = true;
                             this.game.lastCheckpoint = { x: checkpoint.x, y: checkpoint.y };
-                            this.showMessage('🏁 Checkpoint activé !');
+                            this.showMessage(this.t('checkpoint'));
                             this.addParticles(checkpoint.x + this.ZOOM/2, checkpoint.y + this.ZOOM/2, 15, '#00ffff');
                         }
                     }
                 });
-                
-                // Leviers
+
                 this.game.levers.forEach(lever => {
                     if (!lever.activated) {
                         const dx = this.player.x + this.player.width/2 - lever.x - this.ZOOM/2;
                         const dy = this.player.y + this.player.height/2 - lever.y - this.ZOOM/2;
-                        
+
                         if (Math.abs(dx) < this.ZOOM && Math.abs(dy) < this.ZOOM) {
                             lever.activated = true;
                             this.game.grayBlocksActive = false;
@@ -1039,26 +1020,25 @@
                     }
                 });
             }
-            
+
             playerDeath() {
                 if (!this.gameState.sandboxMode) {
                     this.game.lives--;
                 }
                 this.addParticles(this.player.x + this.player.width/2, this.player.y + this.player.height/2, 20, this.player.color);
-                
-                if (this.game.lives <= 0) {
+
+                if (this.game.lives <= 0 && !this.gameState.sandboxMode) {
                     this.gameOver();
                 } else {
                     this.respawnPlayer();
                 }
             }
-            
+
             respawnPlayer() {
                 if (this.game.lastCheckpoint) {
                     this.player.x = this.game.lastCheckpoint.x;
                     this.player.y = this.game.lastCheckpoint.y;
                 } else {
-                    // Chercher le spawn vert
                     for (let y = 0; y < this.map.height; y++) {
                         for (let x = 0; x < this.map.width; x++) {
                             const color = this.getPixelColor(x, y);
@@ -1070,91 +1050,112 @@
                         }
                     }
                 }
-                
+
                 this.player.vx = 0;
                 this.player.vy = 0;
-                this.showMessage('💀 Respawn !');
+                this.showMessage(this.t('respawn'));
                 this.updateUI();
             }
-            
+
             gameOver() {
                 this.gameState.gameOver = true;
-                this.showMessage('💀 GAME OVER ! Appuyez sur R pour recommencer');
+
+                const coinsCollected = this.game.coins.filter(c => c.collected).length;
+                const totalCoins = this.game.coins.length;
+                const coinPercentage = totalCoins > 0 ? Math.round((coinsCollected / totalCoins) * 100) : 100;
+
+                const gameOverScreen = document.getElementById('gameOverScreen');
+                const gameOverStats = document.getElementById('gameOverStats');
+
+                gameOverStats.innerHTML = `
+                    ${this.t('finalScore')} ${this.game.score}<br>
+                    ${this.t('coins')} ${coinsCollected}/${totalCoins} (${coinPercentage}%)<br>
+                    ${this.t('mode')} ${this.gameState.sandboxMode ? this.t('sandbox') : this.t('normal')}<br>
+                `;
+
+                gameOverScreen.style.display = 'flex';
+                this.addParticles(this.player.x + this.player.width/2, this.player.y + this.player.height/2, 30, '#e74c3c');
             }
-            
+
             levelComplete() {
                 this.gameState.levelComplete = true;
-    
-                 // Calculer les stats
-                    const coinsCollected = this.game.coins.filter(c => c.collected).length;
-                    const totalCoins = this.game.coins.length;
-                    const coinPercentage = totalCoins > 0 ? Math.round((coinsCollected / totalCoins) * 100) : 100;
-    
-                    // Afficher l'écran de fin
-                    const endScreen = document.getElementById('endScreen');
-                    const endStats = document.getElementById('endStats');
-    
-                    endStats.innerHTML = `
-                        💰 Score Final: ${this.game.score}<br>
-                        🪙 Pièces: ${coinsCollected}/${totalCoins} (${coinPercentage}%)<br>
-                        ❤️ Vies Restantes: ${this.game.lives}<br>
-                        🎮 Mode: ${this.gameState.sandboxMode ? '🏖️ Bac à Sable' : '🎯 Normal'}<br>
-                        ${coinPercentage === 100 ? '⭐ PARFAIT ! Toutes les pièces collectées !' : ''}
-                    `;
-    
-                    endScreen.style.display = 'flex';
-    
-                    this.addParticles(this.player.x + this.player.width/2, this.player.y + this.player.height/2, 30, '#00ff00');
-                }
-            
+
+                const coinsCollected = this.game.coins.filter(c => c.collected).length;
+                const totalCoins = this.game.coins.length;
+                const coinPercentage = totalCoins > 0 ? Math.round((coinsCollected / totalCoins) * 100) : 100;
+
+                const endScreen = document.getElementById('endScreen');
+                const endStats = document.getElementById('endStats');
+
+                endStats.innerHTML = `
+                    ${this.t('finalScore')} ${this.game.score}<br>
+                    ${this.t('coins')} ${coinsCollected}/${totalCoins} (${coinPercentage}%)<br>
+                    ${this.t('livesLeft')} ${this.game.lives}<br>
+                    ${this.t('mode')} ${this.gameState.sandboxMode ? this.t('sandbox') : this.t('normal')}<br>
+                    ${coinPercentage === 100 ? this.t('perfect') : ''}
+                `;
+
+                endScreen.style.display = 'flex';
+                this.addParticles(this.player.x + this.player.width/2, this.player.y + this.player.height/2, 30, '#00ff00');
+            }
+
+            restartFromEndScreen() {
+                document.getElementById('endScreen').style.display = 'none';
+                this.restartLevel();
+            }
+
+            restartFromGameOver() {
+                document.getElementById('gameOverScreen').style.display = 'none';
+                this.restartLevel();
+            }
+
             restartLevel() {
                 if (this.gameState.loaded) {
-                    // Réinitialiser toutes les pièces
                     this.game.coins.forEach(coin => {
-            coin.collected = false;
+                        coin.collected = false;
                     });
-        
-                    // Réinitialiser les checkpoints
+
                     this.game.checkpoints.forEach(checkpoint => {
                         checkpoint.activated = false;
                     });
-        
-                    // Réinitialiser les leviers
+
                     this.game.levers.forEach(lever => {
                         lever.activated = false;
                     });
                     this.game.grayBlocksActive = true;
-        
-                    // Reset du score et des vies
+
                     this.game.score = 0;
                     this.game.lives = this.gameState.sandboxMode ? 999 : 3;
-        
-                    // Respawn au point de départ sans mourir
+                    this.game.lastCheckpoint = null;
+
                     this.respawnPlayer();
-        
-                    // Reset des états du jeu
+
                     this.gameState.gameOver = false;
                     this.gameState.levelComplete = false;
                     this.particles = [];
-        
+
                     this.updateUI();
-                    this.showMessage('🔄 Niveau redémarré !');
+                    this.showMessage(this.t('levelRestarted'));
                 }
             }
-            
+
+            loadNewMap() {
+                document.getElementById('endScreen').style.display = 'none';
+                document.getElementById('gameOverScreen').style.display = 'none';
+                document.getElementById('mapFile').click();
+            }
+
             updateCamera() {
                 const targetX = this.player.x - this.canvas.width / 2;
                 const targetY = this.player.y - this.canvas.height / 2;
-                
-                // Lissage de la caméra
+
                 this.game.camera.x += (targetX - this.game.camera.x) * 0.1;
                 this.game.camera.y += (targetY - this.game.camera.y) * 0.1;
-                
-                // Limites
+
                 this.game.camera.x = Math.max(0, Math.min(this.map.width * this.ZOOM - this.canvas.width, this.game.camera.x));
                 this.game.camera.y = Math.max(0, Math.min(this.map.height * this.ZOOM - this.canvas.height, this.game.camera.y));
             }
-            
+
             addParticles(x, y, count, color) {
                 for (let i = 0; i < count; i++) {
                     this.particles.push({
@@ -1168,7 +1169,7 @@
                     });
                 }
             }
-            
+
             updateParticles() {
                 this.particles = this.particles.filter(p => {
                     p.x += p.vx;
@@ -1178,59 +1179,59 @@
                     return p.life > 0;
                 });
             }
-            
+
             render() {
                 this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                
+
                 if (!this.gameState.loaded) {
                     this.renderWelcomeScreen();
                     return;
                 }
-                
+
                 this.renderMap();
                 this.renderPlayer();
                 this.renderCollectibles();
                 this.renderParticles();
-                
+
                 if (this.gameState.debugMode) {
                     this.renderDebug();
                 }
             }
-            
+
             renderWelcomeScreen() {
                 const gradient = this.ctx.createLinearGradient(0, 0, this.canvas.width, this.canvas.height);
                 gradient.addColorStop(0, '#1a1a2e');
                 gradient.addColorStop(1, '#16213e');
                 this.ctx.fillStyle = gradient;
                 this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-                
+
                 this.ctx.fillStyle = '#4a90e2';
                 this.ctx.font = 'bold 32px Courier New';
                 this.ctx.textAlign = 'center';
-                this.ctx.fillText('🎮 Pix’Adventure', this.canvas.width/2, this.canvas.height/2 - 50);
-                
+                this.ctx.fillText(this.t('welcomeTitle'), this.canvas.width/2, this.canvas.height/2 - 50);
+
                 this.ctx.fillStyle = 'white';
                 this.ctx.font = '18px Courier New';
-                this.ctx.fillText('Chargez une image de map pour commencer', this.canvas.width/2, this.canvas.height/2);
-                
+                this.ctx.fillText(this.t('welcomeText'), this.canvas.width/2, this.canvas.height/2);
+
                 this.ctx.fillStyle = '#888';
                 this.ctx.font = '14px Courier New';
                 this.ctx.fillText(this.t('mapColors1'), this.canvas.width/2, this.canvas.height/2 + 30);
                 this.ctx.fillText(this.t('mapColors2'), this.canvas.width/2, this.canvas.height/2 + 50);
             }
-            
+
             renderMap() {
                 const startX = Math.floor(this.game.camera.x / this.ZOOM);
                 const startY = Math.floor(this.game.camera.y / this.ZOOM);
                 const endX = Math.min(this.map.width, startX + Math.ceil(this.canvas.width / this.ZOOM) + 1);
                 const endY = Math.min(this.map.height, startY + Math.ceil(this.canvas.height / this.ZOOM) + 1);
-                
+
                 for (let y = startY; y < endY; y++) {
                     for (let x = startX; x < endX; x++) {
                         const color = this.getPixelColor(x, y);
                         const screenX = x * this.ZOOM - this.game.camera.x;
                         const screenY = y * this.ZOOM - this.game.camera.y;
-                        
+
                         if (this.colorMatches(color, this.COLORS.BLACK)) {
                             this.ctx.fillStyle = '#2c3e50';
                             this.ctx.fillRect(screenX, screenY, this.ZOOM, this.ZOOM);
@@ -1264,9 +1265,8 @@
                     }
                 }
             }
-            
+
             renderPlayer() {
-                // Trail
                 this.ctx.globalAlpha = 0.3;
                 this.player.trail.forEach((point, i) => {
                     const alpha = i / this.player.trail.length;
@@ -1278,72 +1278,61 @@
                         4, 4
                     );
                 });
-                
+
                 this.ctx.globalAlpha = 1;
-                
-                // Joueur principal
+
                 const screenX = this.player.x - this.game.camera.x;
                 const screenY = this.player.y - this.game.camera.y;
-                
-                // Ombre
+
                 this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
                 this.ctx.fillRect(screenX + 2, screenY + 2, this.player.width, this.player.height);
-                
-                // Corps du joueur
+
                 this.ctx.fillStyle = this.player.color;
                 this.ctx.fillRect(screenX, screenY, this.player.width, this.player.height);
-                
-                // Bordure
+
                 this.ctx.strokeStyle = '#fff';
                 this.ctx.lineWidth = 1;
                 this.ctx.strokeRect(screenX, screenY, this.player.width, this.player.height);
-                
-                // Yeux
+
                 this.ctx.fillStyle = 'white';
                 this.ctx.fillRect(screenX + 3, screenY + 3, 3, 3);
                 this.ctx.fillRect(screenX + this.player.width - 6, screenY + 3, 3, 3);
-                
+
                 this.ctx.fillStyle = 'black';
                 this.ctx.fillRect(screenX + 4, screenY + 4, 1, 1);
                 this.ctx.fillRect(screenX + this.player.width - 5, screenY + 4, 1, 1);
             }
-            
+
             renderCollectibles() {
-                // Pièces
                 this.game.coins.forEach(coin => {
                     if (!coin.collected) {
                         const screenX = coin.x - this.game.camera.x;
                         const screenY = coin.y - this.game.camera.y;
-                        
-                        // Animation de pulsation
+
                         const pulse = Math.sin(coin.pulse) * 0.2 + 1;
                         const size = this.ZOOM * 0.6 * pulse;
-                        
-                        // Halo
+
                         this.ctx.shadowColor = '#ffd700';
                         this.ctx.shadowBlur = 10;
-                        
+
                         this.ctx.fillStyle = '#ffd700';
                         this.ctx.beginPath();
                         this.ctx.arc(screenX, screenY, size/2, 0, Math.PI * 2);
                         this.ctx.fill();
-                        
-                        // Reset shadow
+
                         this.ctx.shadowBlur = 0;
-                        
-                        // Détails de la pièce
+
                         this.ctx.fillStyle = '#ffed4e';
                         this.ctx.beginPath();
                         this.ctx.arc(screenX, screenY, size/3, 0, Math.PI * 2);
                         this.ctx.fill();
                     }
                 });
-                
-                // Checkpoints
+
                 this.game.checkpoints.forEach(checkpoint => {
                     const screenX = checkpoint.x - this.game.camera.x + this.ZOOM/2;
                     const screenY = checkpoint.y - this.game.camera.y + this.ZOOM/2;
-                    
+
                     if (checkpoint.activated) {
                         this.ctx.fillStyle = '#00ff88';
                         this.ctx.shadowColor = '#00ff88';
@@ -1353,110 +1342,66 @@
                         this.ctx.shadowColor = '#00ffff';
                         this.ctx.shadowBlur = 5;
                     }
-                    
+
                     this.ctx.fillRect(
                         screenX - this.ZOOM/2,
                         screenY - this.ZOOM/2,
                         this.ZOOM,
                         this.ZOOM
                     );
-                    
+
                     this.ctx.shadowBlur = 0;
-                    
-                    // Icône checkpoint
+
                     this.ctx.fillStyle = 'white';
                     this.ctx.font = `${this.ZOOM/2}px Arial`;
                     this.ctx.textAlign = 'center';
                     this.ctx.fillText('🚩', screenX, screenY + 3);
                 });
-                
-                // Leviers
+
                 this.game.levers.forEach(lever => {
                     const screenX = lever.x - this.game.camera.x + this.ZOOM/2;
                     const screenY = lever.y - this.game.camera.y + this.ZOOM/2;
-                    
+
                     let fillColor = lever.activated ? '#00ff00' : '#ffa500';
                     let shadowColor = lever.activated ? '#00ff00' : '#ffa500';
                     let shadowBlur = lever.activated ? 15 : 5;
-                    
+
                     if (!lever.activated) {
                         lever.pulse += 0.1;
                         shadowBlur = Math.sin(lever.pulse) * 5 + 10;
                     }
-                    
+
                     this.ctx.fillStyle = fillColor;
                     this.ctx.shadowColor = shadowColor;
                     this.ctx.shadowBlur = shadowBlur;
-                    
+
                     this.ctx.fillRect(
                         screenX - this.ZOOM/2,
                         screenY - this.ZOOM/2,
                         this.ZOOM,
                         this.ZOOM
                     );
-                    
+
                     this.ctx.shadowBlur = 0;
-                    
-                    // Icône levier
+
                     this.ctx.fillStyle = 'white';
                     this.ctx.font = `${this.ZOOM/2}px Arial`;
                     this.ctx.textAlign = 'center';
                     this.ctx.fillText('🔀', screenX, screenY + 3);
                 });
             }
-            
+
             renderParticles() {
                 this.particles.forEach(particle => {
                     this.ctx.globalAlpha = particle.life;
                     this.ctx.fillStyle = particle.color;
-                    
+
                     const screenX = particle.x - this.game.camera.x;
                     const screenY = particle.y - this.game.camera.y;
-                    
+
                     this.ctx.fillRect(screenX - 1, screenY - 1, 2, 2);
                 });
                 this.ctx.globalAlpha = 1;
-            }
-            
-
-            restartFromEndScreen() {
-                document.getElementById('endScreen').style.display = 'none';
-    
-                // Réinitialiser toutes les pièces
-                this.game.coins.forEach(coin => {
-                    coin.collected = false;
-                });
-    
-                // Réinitialiser les checkpoints
-                this.game.checkpoints.forEach(checkpoint => {
-                    checkpoint.activated = false;
-                });
-    
-                // Réinitialiser les leviers
-                this.game.levers.forEach(lever => {
-                    lever.activated = false;
-                });
-                this.game.grayBlocksActive = true;
-    
-                // Reset du score et des vies
-                this.game.score = 0;
-                this.game.lives = this.gameState.sandboxMode ? 999 : 3;
-    
-                // Respawn au point de départ
-                this.respawnPlayer();
-    
-                // Reset des états du jeu
-                this.gameState.gameOver = false;
-                this.gameState.levelComplete = false;
-    
-                this.updateUI();
-                this.showMessage('🔄 Niveau redémarré !');
-            }
-
-
-            loadNewMap() {
-                document.getElementById('endScreen').style.display = 'none';
-                document.getElementById('mapFile').click();
             }
 
             renderDebug() {
@@ -1474,29 +1419,27 @@
                         FPS: ${Math.round(1000 / (Date.now() - (this.lastFrame || Date.now())))}<br>
                     `;
                 }
-                
-                // Grille de debug
+
                 this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
                 this.ctx.lineWidth = 1;
-                
+
                 const startX = Math.floor(this.game.camera.x / this.ZOOM) * this.ZOOM;
                 const startY = Math.floor(this.game.camera.y / this.ZOOM) * this.ZOOM;
-                
+
                 for (let x = startX; x < this.game.camera.x + this.canvas.width; x += this.ZOOM) {
                     this.ctx.beginPath();
                     this.ctx.moveTo(x - this.game.camera.x, 0);
                     this.ctx.lineTo(x - this.game.camera.x, this.canvas.height);
                     this.ctx.stroke();
                 }
-                
+
                 for (let y = startY; y < this.game.camera.y + this.canvas.height; y += this.ZOOM) {
                     this.ctx.beginPath();
                     this.ctx.moveTo(0, y - this.game.camera.y);
                     this.ctx.lineTo(this.canvas.width, y - this.game.camera.y);
                     this.ctx.stroke();
                 }
-                
-                // Hitbox du joueur
+
                 this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
                 this.ctx.lineWidth = 2;
                 this.ctx.strokeRect(
@@ -1506,7 +1449,7 @@
                     this.player.height
                 );
             }
-            
+
             toggleDebug() {
                 this.gameState.debugMode = !this.gameState.debugMode;
                 const debugInfo = document.getElementById('debugInfo');
@@ -1514,12 +1457,12 @@
                     debugInfo.style.display = 'none';
                 }
             }
-            
+
             showMessage(text, duration = 3000) {
                 const messageEl = document.getElementById('gameMessage');
                 messageEl.textContent = text;
                 messageEl.classList.add('pulsing');
-                
+
                 setTimeout(() => {
                     messageEl.classList.remove('pulsing');
                     if (messageEl.textContent === text) {
@@ -1527,12 +1470,12 @@
                     }
                 }, duration);
             }
-            
+
             updateUI() {
                 document.getElementById('score').textContent = this.game.score;
                 document.getElementById('lives').textContent = this.game.lives;
             }
-            
+
             gameLoop() {
                 this.lastFrame = Date.now();
                 this.update();
@@ -1540,24 +1483,19 @@
                 requestAnimationFrame(() => this.gameLoop());
             }
         }
-        
 
-        // Démarrage du jeu
         window.addEventListener('load', () => {
-            window.game = new PixelPlatformer(); // Ajouter window.game =
+            window.game = new PixelPlatformer();
         });
-        
-        // Empêcher le menu contextuel sur le canvas
+
         document.addEventListener('contextmenu', (e) => {
             if (e.target.tagName === 'CANVAS') {
                 e.preventDefault();
             }
         });
-        
-        // Gestion de la visibilité de la page
+
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
-                // Pause le jeu quand l'onglet n'est pas visible
                 console.log('Jeu en pause');
             }
         });
