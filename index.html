@@ -559,11 +559,31 @@
                 this.setupSandboxMode();
                 this.setupEditor();
                 this.setupLanguage();
-                this.showMessage("Chargez une map pour commencer l'aventure !");
+                this.loadDefaultMap();
                 this.gameLoop();
             }
             
-                        setupFullscreen() {
+            async loadDefaultMap() {
+                try {
+                    const response = await fetch('Exemple/map.png');
+                    if (!response.ok) throw new Error('Map par défaut introuvable');
+                    const blob = await response.blob();
+                    const img = await this.loadImage(blob);
+                    await this.processMapImage(img);
+                    this.initializeLevel();
+                    this.gameState.loaded = true;
+                    this.showMessage(this.t('mapLoaded'));
+                    
+                    document.getElementById('mapInfo').textContent = 
+                        `Map: ${this.map.width}x${this.map.height} pixels`;
+                } catch (error) {
+                    console.error('Erreur lors du chargement de la map par défaut:', error);
+                    this.showMessage(this.t('loadError'));
+                    this.showMessage(this.t('startMessage')); // Afficher le message de bienvenue si erreur
+                }
+            }
+            
+            setupFullscreen() {
                 const fullscreenBtn = document.getElementById('fullscreenBtn');
                 const gameContainer = document.querySelector('.game-container');
                 
