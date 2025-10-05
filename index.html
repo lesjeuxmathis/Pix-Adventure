@@ -561,47 +561,11 @@
                 this.setupSandboxMode();
                 this.setupEditor();
                 this.setupLanguage();
-                this.showMessage("Chargement de la map par défaut...");
-                this.loadDefaultMap();
+                this.showMessage("Chargez une map pour commencer l'aventure !");
                 this.gameLoop();
             }
             
-            async loadDefaultMap() {
-                try {
-                    const response = await fetch('Exemple/map.png');
-                    if (!response.ok) {
-                        this.showMessage("Chargez une map pour commencer l'aventure !");
-                        return;
-                    }
-                    
-                    const blob = await response.blob();
-                    const img = await this.loadImageFromBlob(blob);
-                    await this.processMapImage(img);
-                    this.initializeLevel();
-                    this.gameState.loaded = true;
-                    this.showMessage("Map par défaut chargée ! Bonne chance !");
-                    
-                    document.getElementById('mapInfo').textContent = 
-                        `Map: ${this.map.width}x${this.map.height} pixels`;
-                } catch (error) {
-                    console.log('Map par défaut non trouvée, en attente de chargement manuel');
-                    this.showMessage("Chargez une map pour commencer l'aventure !");
-                }
-            }
-            
-            loadImageFromBlob(blob) {
-                return new Promise((resolve, reject) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        URL.revokeObjectURL(img.src);
-                        resolve(img);
-                    };
-                    img.onerror = reject;
-                    img.src = URL.createObjectURL(blob);
-                });
-            }
-            
-            setupFullscreen() {
+                        setupFullscreen() {
                 const fullscreenBtn = document.getElementById('fullscreenBtn');
                 const gameContainer = document.querySelector('.game-container');
                 
@@ -634,6 +598,7 @@
                         this.canvas.height = 600;
                     }
                 });
+            }
             }
 
             setupSkinColorPicker() {
