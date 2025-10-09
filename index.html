@@ -177,7 +177,7 @@
 
         .file-input-container {
             margin-bottom: 20px;
-            text-align:  center;
+            text-align: center;
         }
 
         .file-input {
@@ -447,10 +447,15 @@
         </div>
 
         <div class="key-remap-panel" id="keyRemapPanel">
-            <div style="text-align: center; margin-bottom: 10px; font-weight: bold; color: #4a90e2;">Customisation des touches</div>
+            <div style="text-align: center; margin-bottom: 10px; font-weight: bold; color: #4a90e2;">Customisation Clavier</div>
             <div>Gauche: <button class="remap-btn" data-key="left">A</button> <button class="remap-btn" data-key="left2">←</button></div>
             <div>Droite: <button class="remap-btn" data-key="right">D</button> <button class="remap-btn" data-key="right2">→</button></div>
             <div>Saut: <button class="remap-btn" data-key="jump">ESPACE</button> <button class="remap-btn" data-key="jump2">↑</button></div>
+            <div style="text-align: center; margin-top: 10px; font-weight: bold; color: #4a90e2;">Customisation Manette</div>
+            <div>Saut: <button class="remap-btn" data-key="controller_jump">Bouton 0</button></div>
+            <div>Axe Mouvement: <button class="remap-btn" data-key="controller_axis">Axe 0</button></div>
+            <div>D-Pad Gauche: <button class="remap-btn" data-key="controller_dpad_left">Bouton 14</button></div>
+            <div>D-Pad Droite: <button class="remap-btn" data-key="controller_dpad_right">Bouton 15</button></div>
             <div style="text-align: center; margin-top: 10px;">
                 <button class="remap-btn" onclick="game.saveKeyMap()" style="background: linear-gradient(45deg, #27ae60, #2ecc71);">💾 Sauvegarder</button>
                 <button class="remap-btn" onclick="game.loadDefaultKeys()" style="background: linear-gradient(45deg, #e67e22, #d35400);">🔄 Défaut</button>
@@ -639,12 +644,21 @@
 
                 // Gamepad
                 this.gamepads = [];
+                this.previousGpState = { buttons: [], axes: [] };
+                this.remappingInterval = null;
 
                 // Custom keys
                 this.keyMap = {
                     left: ['a', 'arrowleft'],
                     right: ['d', 'arrowright'],
-                    jump: [' ', 'w', 'arrowup']
+                    jump: [' ', 'arrowup']
+                };
+
+                this.controllerMap = {
+                    moveAxis: 0,
+                    dpadLeft: 14,
+                    dpadRight: 15,
+                    jumpButton: 0
                 };
 
                 this.remappingKey = null;
@@ -711,23 +725,25 @@
                     const currentGamepads = navigator.getGamepads ? navigator.getGamepads() : [];
                     const gp = this.gamepads[0];
                     if (currentGamepads[gp.index]) {
-                        const axes = gp.axes;
-                        const buttons = gp.buttons;
+                        const axes = currentGamepads[gp.index].axes;
+                        const buttons = currentGamepads[gp.index].buttons;
 
-                        // Mouvement : stick gauche (axe 0) ou D-Pad (boutons 14/15)
-                        moveInput += axes[0] || 0; // Stick gauche X
-                        if (buttons[14] && buttons[14].pressed) moveInput -= 1; // D-Pad gauche
-                        if (buttons[15] && buttons[15].pressed) moveInput += 1; // D-Pad droite
+                        // Mouvement : stick gauche (axe)
+                        moveInput += axes[this.controllerMap.moveAxis] || 0;
 
-                        // Saut : bouton 0 (A sur Xbox/PS)
-                        if (buttons[0] && buttons[0].pressed) {
+                        // D-Pad
+                        if (buttons[this.controllerMap.dpadLeft] && buttons[this.controllerMap.dpadLeft].pressed) moveInput -= 1;
+                        if (buttons[this.controllerMap.dpadRight] && buttons[this.controllerMap.dpadRight].pressed) moveInput += 1;
+
+                        // Saut
+                        if (buttons[this.controllerMap.jumpButton] && buttons[this.controllerMap.jumpButton].pressed) {
                             jumpPressed = true;
                         }
 
-                        // Vibrations cool pour le fun (ex: sur saut)
+                        // Vibrations sur saut
                         if (jumpPressed && this.player.onGround) {
-                            if (gp.vibrationActuator) {
-                                gp.vibrationActuator.playEffect('dual-rumble', {
+                            if (currentGamepads[gp.index].vibrationActuator) {
+                                currentGamepads[gp.index].vibrationActuator.playEffect('dual-rumble', {
                                     duration: 50,
                                     startDelay: 0,
                                     strongMagnitude: 0.5,
@@ -848,7 +864,7 @@
                 document.querySelector('.lives').innerHTML = `${t.lives} <span id="lives">${this.game.lives}</span>`;
                 document.getElementById('sandboxBtn').textContent = this.gameState.sandboxMode ? t.sandboxActive : t.sandbox;
                 document.getElementById('editorBtn').textContent = t.editor;
-                document.getElementById('remapBtn').textContent = '⌨️ Custom Keys';
+                document.getElementById('remapBtn').textContent = this.currentLanguage === 'fr' ? '⌨️ Custom Touches' : '⌨️ Custom Keys';
                 document.querySelector('.controls-title').textContent = t.controls;
                 document.querySelector('.controls div:nth-child(2)').textContent = t.controlsText;
                 document.querySelector('.controls div:nth-child(3)').textContent = this.currentLanguage === 'fr' ? '🎮 Manette : Stick gauche / D-Pad : Déplacement | A : Saut' : '🎮 Controller: Left Stick / D-Pad: Move | A: Jump';
@@ -860,7 +876,7 @@
                 if (!this.gameState.loaded) {
                     document.getElementById('mapInfo').textContent = t.mapInfo;
                 }
-                document.getElementById('controllerIndicator').textContent = this.currentLanguage === 'fr' ? '🎮 Manette connectée !' : '🎮 Controller connected!';
+                document.getElementById('controllerIndicator').textContent = t.controllerConnected;
             }
 
             t(key) {
@@ -887,10 +903,16 @@
                         this.restartFromGameOver();
                     }
 
-                    // Si en mode remapping
-                    if (this.remappingKey) {
+                    // Remapping clavier
+                    if (this.remappingKey && !this.remappingKey.startsWith('controller_')) {
                         e.preventDefault();
-                        this.keyMap[this.remappingKey] = [key];
+                        let base = this.remappingKey;
+                        let index = 0;
+                        if (base.endsWith('2')) {
+                            base = base.replace('2', '');
+                            index = 1;
+                        }
+                        this.keyMap[base][index] = key;
                         this.updateRemapButtons();
                         this.remappingKey = null;
                         this.showMessage(this.t('keysSaved'));
@@ -913,16 +935,12 @@
                 document.querySelectorAll('.remap-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         const keyType = e.target.dataset.key;
-                        if (keyType.includes('2')) {
-                            const baseType = keyType.replace('2', '');
-                            this.remappingKey = baseType;
-                            e.target.textContent = '?';
-                            this.showMessage(`Appuyez sur la nouvelle touche pour ${baseType}`);
-                        } else {
-                            this.remappingKey = keyType;
-                            e.target.textContent = '?';
-                            this.showMessage(`Appuyez sur la nouvelle touche pour ${keyType}`);
+                        this.remappingKey = keyType;
+                        e.target.textContent = '?';
+                        if (keyType.startsWith('controller_')) {
+                            this.startGamepadPolling();
                         }
+                        this.showMessage(`Appuyez sur la touche/bouton pour ${keyType}`);
                     });
                 });
 
@@ -930,24 +948,114 @@
                 this.updateRemapButtons();
             }
 
+            startGamepadPolling() {
+                if (this.gamepads.length === 0) {
+                    this.showMessage(this.t('controllerDisconnected'));
+                    this.remappingKey = null;
+                    this.updateRemapButtons();
+                    return;
+                }
+
+                const gp = navigator.getGamepads()[this.gamepads[0].index];
+                this.previousGpState = {
+                    buttons: gp.buttons.map(b => b.pressed),
+                    axes: gp.axes.slice()
+                };
+
+                this.remappingInterval = setInterval(() => this.pollGamepadForRemap(), 50);
+            }
+
+            pollGamepadForRemap() {
+                const gp = navigator.getGamepads()[this.gamepads[0].index];
+                if (!gp) return;
+
+                let assigned = false;
+
+                // Boutons
+                for (let i = 0; i < gp.buttons.length; i++) {
+                    if (gp.buttons[i].pressed && !this.previousGpState.buttons[i]) {
+                        if (this.remappingKey === 'controller_jump') {
+                            this.controllerMap.jumpButton = i;
+                            assigned = true;
+                        } else if (this.remappingKey === 'controller_dpad_left') {
+                            this.controllerMap.dpadLeft = i;
+                            assigned = true;
+                        } else if (this.remappingKey === 'controller_dpad_right') {
+                            this.controllerMap.dpadRight = i;
+                            assigned = true;
+                        }
+                    }
+                }
+
+                // Axes
+                for (let i = 0; i < gp.axes.length; i++) {
+                    const value = gp.axes[i];
+                    const prev = this.previousGpState.axes[i];
+                    if (Math.abs(value) > 0.5 && Math.abs(prev) < 0.5) {
+                        if (this.remappingKey === 'controller_axis') {
+                            this.controllerMap.moveAxis = i;
+                            assigned = true;
+                        }
+                    }
+                }
+
+                if (assigned) {
+                    clearInterval(this.remappingInterval);
+                    this.updateRemapButtons();
+                    this.remappingKey = null;
+                    this.showMessage(this.t('keysSaved'));
+                }
+
+                // Mise à jour état précédent
+                this.previousGpState.buttons = gp.buttons.map(b => b.pressed);
+                this.previousGpState.axes = gp.axes.slice();
+            }
+
             updateRemapButtons() {
-                document.querySelector('[data-key="left"]').textContent = this.keyMap.left[0]?.toUpperCase() || 'A';
-                document.querySelector('[data-key="left2"]').textContent = this.keyMap.left[1]?.toUpperCase() || '←';
-                document.querySelector('[data-key="right"]').textContent = this.keyMap.right[0]?.toUpperCase() || 'D';
-                document.querySelector('[data-key="right2"]').textContent = this.keyMap.right[1]?.toUpperCase() || '→';
-                document.querySelector('[data-key="jump"]').textContent = this.keyMap.jump[0]?.toUpperCase() || 'ESPACE';
-                document.querySelector('[data-key="jump2"]').textContent = this.keyMap.jump[1]?.toUpperCase() || '↑';
+                const keySymbols = {
+                    'arrowleft': '←',
+                    'arrowright': '→',
+                    'arrowup': '↑',
+                    ' ': this.currentLanguage === 'fr' ? 'ESPACE' : 'SPACE',
+                    'w': 'W'
+                };
+
+                // Clavier
+                let left1 = this.keyMap.left[0] ? (keySymbols[this.keyMap.left[0]] || this.keyMap.left[0].toUpperCase()) : 'A';
+                let left2 = this.keyMap.left[1] ? (keySymbols[this.keyMap.left[1]] || this.keyMap.left[1].toUpperCase()) : '←';
+                let right1 = this.keyMap.right[0] ? (keySymbols[this.keyMap.right[0]] || this.keyMap.right[0].toUpperCase()) : 'D';
+                let right2 = this.keyMap.right[1] ? (keySymbols[this.keyMap.right[1]] || this.keyMap.right[1].toUpperCase()) : '→';
+                let jump1 = this.keyMap.jump[0] ? (keySymbols[this.keyMap.jump[0]] || this.keyMap.jump[0].toUpperCase()) : 'ESPACE';
+                let jump2 = this.keyMap.jump[1] ? (keySymbols[this.keyMap.jump[1]] || this.keyMap.jump[1].toUpperCase()) : '↑';
+
+                document.querySelector('[data-key="left"]').textContent = left1;
+                document.querySelector('[data-key="left2"]').textContent = left2;
+                document.querySelector('[data-key="right"]').textContent = right1;
+                document.querySelector('[data-key="right2"]').textContent = right2;
+                document.querySelector('[data-key="jump"]').textContent = jump1;
+                document.querySelector('[data-key="jump2"]').textContent = jump2;
+
+                // Manette
+                document.querySelector('[data-key="controller_jump"]').textContent = `Bouton ${this.controllerMap.jumpButton}`;
+                document.querySelector('[data-key="controller_axis"]').textContent = `Axe ${this.controllerMap.moveAxis}`;
+                document.querySelector('[data-key="controller_dpad_left"]').textContent = `Bouton ${this.controllerMap.dpadLeft}`;
+                document.querySelector('[data-key="controller_dpad_right"]').textContent = `Bouton ${this.controllerMap.dpadRight}`;
             }
 
             saveKeyMap() {
-                localStorage.setItem('pixAdventureKeys', JSON.stringify(this.keyMap));
+                localStorage.setItem('pixAdventureInput', JSON.stringify({
+                    keyMap: this.keyMap,
+                    controllerMap: this.controllerMap
+                }));
                 this.showMessage(this.t('keysSaved'));
             }
 
             loadKeyMap() {
-                const saved = localStorage.getItem('pixAdventureKeys');
+                const saved = localStorage.getItem('pixAdventureInput');
                 if (saved) {
-                    this.keyMap = { ...this.keyMap, ...JSON.parse(saved) };
+                    const parsed = JSON.parse(saved);
+                    this.keyMap = parsed.keyMap || this.keyMap;
+                    this.controllerMap = parsed.controllerMap || this.controllerMap;
                 }
             }
 
@@ -955,10 +1063,16 @@
                 this.keyMap = {
                     left: ['a', 'arrowleft'],
                     right: ['d', 'arrowright'],
-                    jump: [' ', 'w', 'arrowup']
+                    jump: [' ', 'arrowup']
                 };
+                this.controllerMap = {
+                    moveAxis: 0,
+                    dpadLeft: 14,
+                    dpadRight: 15,
+                    jumpButton: 0
+                };
+                localStorage.removeItem('pixAdventureInput');
                 this.updateRemapButtons();
-                localStorage.removeItem('pixAdventureKeys');
                 this.showMessage(this.t('keysReset'));
             }
 
@@ -1115,7 +1229,7 @@
             updatePlayer() {
                 const wasOnGround = this.player.onGround;
 
-                // Input clavier custom
+                // Input clavier
                 let moveInput = 0;
                 if (this.isKeyPressed(this.keyMap.left)) moveInput -= 1;
                 if (this.isKeyPressed(this.keyMap.right)) moveInput += 1;
