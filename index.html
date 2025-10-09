@@ -290,6 +290,10 @@
             max-height: 70vh;
         }
 
+        .game-container.fullscreen .controls {
+            display: none;
+        }
+
         .debug-info {
             position: absolute;
             top: 10px;
@@ -443,10 +447,6 @@
             border-radius: 10px;
             border: 1px solid #4a90e2;
         }
-
-        .game-container.fullscreen .controls {
-            display: none;
-        }
     </style>
 </head>
 <body>
@@ -545,7 +545,8 @@
                 this.fileInput = document.getElementById('mapFile');
 
                 // Configuration
-                this.ZOOM = 20;
+                this.BASE_ZOOM = 20;
+                this.RENDER_ZOOM = 20;
                 this.GRAVITY = 0.5;
                 this.JUMP_FORCE = -8;
                 this.MOVE_SPEED = 3;
@@ -681,8 +682,8 @@
                 this.player = {
                     x: 100,
                     y: 100,
-                    width: this.ZOOM * 0.8,
-                    height: this.ZOOM * 0.8,
+                    width: this.BASE_ZOOM * 0.8,
+                    height: this.BASE_ZOOM * 0.8,
                     vx: 0,
                     vy: 0,
                     onGround: false,
@@ -734,6 +735,10 @@
                 this.init();
             }
 
+            get scale() {
+                return this.RENDER_ZOOM / this.BASE_ZOOM;
+            }
+
             init() {
                 this.fileInput.addEventListener('change', (e) => this.loadMap(e));
                 this.setupControls();
@@ -756,11 +761,9 @@
                 const zoomOut = document.getElementById('zoomOut');
 
                 const updateZoom = (newZoom) => {
-                    this.ZOOM = newZoom;
+                    this.RENDER_ZOOM = newZoom;
                     zoomSlider.value = newZoom;
                     zoomValue.textContent = newZoom;
-                    this.player.width = this.ZOOM * 0.8;
-                    this.player.height = this.ZOOM * 0.8;
                 };
 
                 zoomSlider.addEventListener('input', (e) => {
@@ -769,21 +772,21 @@
                 });
 
                 zoomIn.addEventListener('click', () => {
-                    let val = parseInt(zoomSlider.value) + 5;
+                    let val = this.RENDER_ZOOM + 5;
                     if (val > 50) val = 50;
                     updateZoom(val);
                 });
 
                 zoomOut.addEventListener('click', () => {
-                    let val = parseInt(zoomSlider.value) - 5;
+                    let val = this.RENDER_ZOOM - 5;
                     if (val < 5) val = 5;
                     updateZoom(val);
                 });
 
-                // Default zoom 20, max dezoom 5
-                document.getElementById('zoomSlider').min = 5;
-                document.getElementById('zoomSlider').max = 50;
-                document.getElementById('zoomSlider').value = 20;
+                // Default zoom 20, min 5
+                zoomSlider.min = 5;
+                zoomSlider.max = 50;
+                zoomSlider.value = 20;
                 zoomValue.textContent = 20;
             }
 
@@ -1238,8 +1241,8 @@
                         colors[key] = (colors[key] || 0) + 1;
 
                         if (this.colorMatches(color, this.COLORS.GREEN) && !spawnFound) {
-                            this.player.x = x * this.ZOOM;
-                            this.player.y = y * this.ZOOM;
+                            this.player.x = x * this.BASE_ZOOM;
+                            this.player.y = y * this.BASE_ZOOM;
                             spawnFound = true;
                         }
                     }
@@ -1269,24 +1272,24 @@
                         const color = this.getPixelColor(x, y);
 
                         if (this.colorMatches(color, this.COLORS.GREEN)) {
-                            this.game.lastCheckpoint = { x: x * this.ZOOM, y: y * this.ZOOM };
+                            this.game.lastCheckpoint = { x: x * this.BASE_ZOOM, y: y * this.BASE_ZOOM };
                         } else if (this.colorMatches(color, this.COLORS.YELLOW)) {
                             this.game.coins.push({
-                                x: x * this.ZOOM + this.ZOOM/2,
-                                y: y * this.ZOOM + this.ZOOM/2,
+                                x: x * this.BASE_ZOOM + this.BASE_ZOOM/2,
+                                y: y * this.BASE_ZOOM + this.BASE_ZOOM/2,
                                 collected: false,
                                 pulse: Math.random() * Math.PI * 2
                             });
                         } else if (this.colorMatches(color, this.COLORS.CYAN)) {
                             this.game.checkpoints.push({
-                                x: x * this.ZOOM,
-                                y: y * this.ZOOM,
+                                x: x * this.BASE_ZOOM,
+                                y: y * this.BASE_ZOOM,
                                 activated: false
                             });
                         } else if (this.colorMatches(color, this.COLORS.ORANGE)) {
                             this.game.levers.push({
-                                x: x * this.ZOOM,
-                                y: y * this.ZOOM,
+                                x: x * this.BASE_ZOOM,
+                                y: y * this.BASE_ZOOM,
                                 activated: false,
                                 pulse: Math.random() * Math.PI * 2
                             });
@@ -1389,10 +1392,10 @@
             }
 
             checkCollision(x, y, width, height) {
-                const x1 = Math.floor(x / this.ZOOM);
-                const y1 = Math.floor(y / this.ZOOM);
-                const x2 = Math.floor((x + width - 1) / this.ZOOM);
-                const y2 = Math.floor((y + height - 1) / this.ZOOM);
+                const x1 = Math.floor(x / this.BASE_ZOOM);
+                const y1 = Math.floor(y / this.BASE_ZOOM);
+                const x2 = Math.floor((x + width - 1) / this.BASE_ZOOM);
+                const y2 = Math.floor((y + height - 1) / this.BASE_ZOOM);
 
                 for (let my = y1; my <= y2; my++) {
                     for (let mx = x1; mx <= x2; mx++) {
@@ -1408,9 +1411,9 @@
             }
 
             checkSpecialTiles() {
-                const centerX = Math.floor((this.player.x + this.player.width / 2) / this.ZOOM);
-                const centerY = Math.floor((this.player.y + this.player.height / 2) / this.ZOOM);
-                const bottomY = Math.floor((this.player.y + this.player.height) / this.ZOOM);
+                const centerX = Math.floor((this.player.x + this.player.width / 2) / this.BASE_ZOOM);
+                const centerY = Math.floor((this.player.y + this.player.height / 2) / this.BASE_ZOOM);
+                const bottomY = Math.floor((this.player.y + this.player.height) / this.BASE_ZOOM);
 
                 const currentColor = this.getPixelColor(centerX, centerY);
                 const groundColor = this.getPixelColor(centerX, bottomY);
@@ -1440,7 +1443,7 @@
                         const dy = this.player.y + this.player.height/2 - coin.y;
                         const distance = Math.sqrt(dx*dx + dy*dy);
 
-                        if (distance < this.ZOOM * 0.6) {
+                        if (distance < this.BASE_ZOOM * 0.6) {
                             coin.collected = true;
                             this.game.score += 100;
                             this.addParticles(coin.x, coin.y, 10, '#ffd700');
@@ -1453,28 +1456,28 @@
 
                 this.game.checkpoints.forEach(checkpoint => {
                     if (!checkpoint.activated) {
-                        const dx = this.player.x + this.player.width/2 - checkpoint.x - this.ZOOM/2;
-                        const dy = this.player.y + this.player.height/2 - checkpoint.y - this.ZOOM/2;
+                        const dx = this.player.x + this.player.width/2 - checkpoint.x - this.BASE_ZOOM/2;
+                        const dy = this.player.y + this.player.height/2 - checkpoint.y - this.BASE_ZOOM/2;
 
-                        if (Math.abs(dx) < this.ZOOM && Math.abs(dy) < this.ZOOM) {
+                        if (Math.abs(dx) < this.BASE_ZOOM && Math.abs(dy) < this.BASE_ZOOM) {
                             checkpoint.activated = true;
                             this.game.lastCheckpoint = { x: checkpoint.x, y: checkpoint.y };
                             this.showMessage(this.t('checkpoint'));
-                            this.addParticles(checkpoint.x + this.ZOOM/2, checkpoint.y + this.ZOOM/2, 15, '#00ffff');
+                            this.addParticles(checkpoint.x + this.BASE_ZOOM/2, checkpoint.y + this.BASE_ZOOM/2, 15, '#00ffff');
                         }
                     }
                 });
 
                 this.game.levers.forEach(lever => {
                     if (!lever.activated) {
-                        const dx = this.player.x + this.player.width/2 - lever.x - this.ZOOM/2;
-                        const dy = this.player.y + this.player.height/2 - lever.y - this.ZOOM/2;
+                        const dx = this.player.x + this.player.width/2 - lever.x - this.BASE_ZOOM/2;
+                        const dy = this.player.y + this.player.height/2 - lever.y - this.BASE_ZOOM/2;
 
-                        if (Math.abs(dx) < this.ZOOM && Math.abs(dy) < this.ZOOM) {
+                        if (Math.abs(dx) < this.BASE_ZOOM && Math.abs(dy) < this.BASE_ZOOM) {
                             lever.activated = true;
                             this.game.grayBlocksActive = false;
                             this.showMessage(this.t('leverActivated'));
-                            this.addParticles(lever.x + this.ZOOM/2, lever.y + this.ZOOM/2, 15, '#ff9900');
+                            this.addParticles(lever.x + this.BASE_ZOOM/2, lever.y + this.BASE_ZOOM/2, 15, '#ff9900');
                         }
                     }
                 });
@@ -1502,8 +1505,8 @@
                         for (let x = 0; x < this.map.width; x++) {
                             const color = this.getPixelColor(x, y);
                             if (this.colorMatches(color, this.COLORS.GREEN)) {
-                                this.player.x = x * this.ZOOM;
-                                this.player.y = y * this.ZOOM;
+                                this.player.x = x * this.BASE_ZOOM;
+                                this.player.y = y * this.BASE_ZOOM;
                                 return;
                             }
                         }
@@ -1605,21 +1608,28 @@
             }
 
             updateCamera() {
-                const targetX = this.player.x - this.canvas.width / 2;
-                const targetY = this.player.y - this.canvas.height / 2;
+                const scale = this.scale;
+                const halfWidth = (this.canvas.width / 2) / scale;
+                const halfHeight = (this.canvas.height / 2) / scale;
+
+                const targetX = this.player.x - halfWidth;
+                const targetY = this.player.y - halfHeight;
 
                 this.game.camera.x += (targetX - this.game.camera.x) * 0.1;
                 this.game.camera.y += (targetY - this.game.camera.y) * 0.1;
 
-                this.game.camera.x = Math.max(0, Math.min(this.map.width * this.ZOOM - this.canvas.width, this.game.camera.x));
-                this.game.camera.y = Math.max(0, Math.min(this.map.height * this.ZOOM - this.canvas.height, this.game.camera.y));
+                const worldWidth = this.map.width * this.BASE_ZOOM;
+                const worldHeight = this.map.height * this.BASE_ZOOM;
+
+                this.game.camera.x = Math.max(halfWidth, Math.min(worldWidth - halfWidth, this.game.camera.x));
+                this.game.camera.y = Math.max(halfHeight, Math.min(worldHeight - halfHeight, this.game.camera.y));
             }
 
             addParticles(x, y, count, color) {
                 for (let i = 0; i < count; i++) {
                     this.particles.push({
-                        x: x + (Math.random() - 0.5) * 10,
-                        y: y + (Math.random() - 0.5) * 10,
+                        x: x + (Math.random() - 0.5) * this.BASE_ZOOM / 2,
+                        y: y + (Math.random() - 0.5) * this.BASE_ZOOM / 2,
                         vx: (Math.random() - 0.5) * 4,
                         vy: (Math.random() - 0.5) * 4 - 2,
                         color: color,
@@ -1637,6 +1647,16 @@
                     p.life -= p.decay;
                     return p.life > 0;
                 });
+            }
+
+            getWorldToScreen(worldX, worldY) {
+                const scale = this.scale;
+                const centerX = this.canvas.width / 2;
+                const centerY = this.canvas.height / 2;
+                return {
+                    x: (worldX - this.game.camera.x) * scale + centerX,
+                    y: (worldY - this.game.camera.y) * scale + centerY
+                };
             }
 
             render() {
@@ -1680,44 +1700,53 @@
             }
 
             renderMap() {
-                const startX = Math.floor(this.game.camera.x / this.ZOOM);
-                const startY = Math.floor(this.game.camera.y / this.ZOOM);
-                const endX = Math.min(this.map.width, startX + Math.ceil(this.canvas.width / this.ZOOM) + 1);
-                const endY = Math.min(this.map.height, startY + Math.ceil(this.canvas.height / this.ZOOM) + 1);
+                const scale = this.scale;
+                const visibleHalfWidth = this.canvas.width / 2 / scale;
+                const visibleHalfHeight = this.canvas.height / 2 / scale;
+
+                const startX = Math.floor((this.game.camera.x - visibleHalfWidth) / this.BASE_ZOOM);
+                const startY = Math.floor((this.game.camera.y - visibleHalfHeight) / this.BASE_ZOOM);
+                const endX = Math.min(this.map.width, Math.ceil((this.game.camera.x + visibleHalfWidth) / this.BASE_ZOOM) + 1);
+                const endY = Math.min(this.map.height, Math.ceil((this.game.camera.y + visibleHalfHeight) / this.BASE_ZOOM) + 1);
+
+                const centerX = this.canvas.width / 2;
+                const centerY = this.canvas.height / 2;
 
                 for (let y = startY; y < endY; y++) {
                     for (let x = startX; x < endX; x++) {
                         const color = this.getPixelColor(x, y);
-                        const screenX = x * this.ZOOM - this.game.camera.x;
-                        const screenY = y * this.ZOOM - this.game.camera.y;
+                        const worldX = x * this.BASE_ZOOM;
+                        const worldY = y * this.BASE_ZOOM;
+                        const screenX = (worldX - this.game.camera.x) * scale + centerX;
+                        const screenY = (worldY - this.game.camera.y) * scale + centerY;
 
                         if (this.colorMatches(color, this.COLORS.BLACK)) {
                             this.ctx.fillStyle = '#2c3e50';
-                            this.ctx.fillRect(screenX, screenY, this.ZOOM, this.ZOOM);
+                            this.ctx.fillRect(screenX, screenY, this.RENDER_ZOOM, this.RENDER_ZOOM);
                             this.ctx.strokeStyle = '#34495e';
-                            this.ctx.strokeRect(screenX, screenY, this.ZOOM, this.ZOOM);
+                            this.ctx.strokeRect(screenX, screenY, this.RENDER_ZOOM, this.RENDER_ZOOM);
                         } else if (this.colorMatches(color, this.COLORS.RED)) {
                             this.ctx.fillStyle = '#e74c3c';
-                            this.ctx.fillRect(screenX, screenY, this.ZOOM, this.ZOOM);
+                            this.ctx.fillRect(screenX, screenY, this.RENDER_ZOOM, this.RENDER_ZOOM);
                         } else if (this.colorMatches(color, this.COLORS.GREEN)) {
                             this.ctx.fillStyle = '#27ae60';
-                            this.ctx.fillRect(screenX, screenY, this.ZOOM, this.ZOOM);
+                            this.ctx.fillRect(screenX, screenY, this.RENDER_ZOOM, this.RENDER_ZOOM);
                         } else if (this.colorMatches(color, this.COLORS.BLUE)) {
                             this.ctx.fillStyle = '#3498db';
-                            this.ctx.fillRect(screenX, screenY, this.ZOOM, this.ZOOM);
+                            this.ctx.fillRect(screenX, screenY, this.RENDER_ZOOM, this.RENDER_ZOOM);
                         } else if (this.colorMatches(color, this.COLORS.VIOLET)) {
                             this.ctx.fillStyle = '#9b59b6';
-                            this.ctx.fillRect(screenX, screenY, this.ZOOM, this.ZOOM);
+                            this.ctx.fillRect(screenX, screenY, this.RENDER_ZOOM, this.RENDER_ZOOM);
                         } else if (this.colorMatches(color, this.COLORS.GRAY)) {
                             if (this.game.grayBlocksActive) {
                                 this.ctx.fillStyle = '#808080';
-                                this.ctx.fillRect(screenX, screenY, this.ZOOM, this.ZOOM);
+                                this.ctx.fillRect(screenX, screenY, this.RENDER_ZOOM, this.RENDER_ZOOM);
                                 this.ctx.strokeStyle = '#696969';
-                                this.ctx.strokeRect(screenX, screenY, this.ZOOM, this.ZOOM);
+                                this.ctx.strokeRect(screenX, screenY, this.RENDER_ZOOM, this.RENDER_ZOOM);
                             } else {
                                 this.ctx.globalAlpha = 0.3;
                                 this.ctx.fillStyle = '#808080';
-                                this.ctx.fillRect(screenX, screenY, this.ZOOM, this.ZOOM);
+                                this.ctx.fillRect(screenX, screenY, this.RENDER_ZOOM, this.RENDER_ZOOM);
                                 this.ctx.globalAlpha = 1;
                             }
                         }
@@ -1726,53 +1755,58 @@
             }
 
             renderPlayer() {
+                const scale = this.scale;
+                const centerX = this.canvas.width / 2;
+                const centerY = this.canvas.height / 2;
+
+                // Trail
                 this.ctx.globalAlpha = 0.3;
                 this.player.trail.forEach((point, i) => {
                     const alpha = i / this.player.trail.length;
                     this.ctx.globalAlpha = alpha * 0.3;
+                    const screen = this.getWorldToScreen(point.x, point.y);
                     this.ctx.fillStyle = this.player.color;
-                    this.ctx.fillRect(
-                        point.x - this.game.camera.x - 2,
-                        point.y - this.game.camera.y - 2,
-                        4, 4
-                    );
+                    this.ctx.fillRect(screen.x - 2, screen.y - 2, 4 * scale, 4 * scale);
                 });
-
                 this.ctx.globalAlpha = 1;
 
-                const screenX = this.player.x - this.game.camera.x;
-                const screenY = this.player.y - this.game.camera.y;
+                const screenX = (this.player.x - this.game.camera.x) * scale + centerX;
+                const screenY = (this.player.y - this.game.camera.y) * scale + centerY;
 
                 this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-                this.ctx.fillRect(screenX + 2, screenY + 2, this.player.width, this.player.height);
+                this.ctx.fillRect(screenX + 2 * scale, screenY + 2 * scale, this.player.width * scale, this.player.height * scale);
 
                 this.ctx.fillStyle = this.player.color;
-                this.ctx.fillRect(screenX, screenY, this.player.width, this.player.height);
+                this.ctx.fillRect(screenX, screenY, this.player.width * scale, this.player.height * scale);
 
                 this.ctx.strokeStyle = '#fff';
-                this.ctx.lineWidth = 1;
-                this.ctx.strokeRect(screenX, screenY, this.player.width, this.player.height);
+                this.ctx.lineWidth = 1 * scale;
+                this.ctx.strokeRect(screenX, screenY, this.player.width * scale, this.player.height * scale);
 
                 this.ctx.fillStyle = 'white';
-                this.ctx.fillRect(screenX + 3, screenY + 3, 3, 3);
-                this.ctx.fillRect(screenX + this.player.width - 6, screenY + 3, 3, 3);
+                this.ctx.fillRect(screenX + 3 * scale, screenY + 3 * scale, 3 * scale, 3 * scale);
+                this.ctx.fillRect(screenX + (this.player.width - 6) * scale, screenY + 3 * scale, 3 * scale, 3 * scale);
 
                 this.ctx.fillStyle = 'black';
-                this.ctx.fillRect(screenX + 4, screenY + 4, 1, 1);
-                this.ctx.fillRect(screenX + this.player.width - 5, screenY + 4, 1, 1);
+                this.ctx.fillRect(screenX + 4 * scale, screenY + 4 * scale, 1 * scale, 1 * scale);
+                this.ctx.fillRect(screenX + (this.player.width - 5) * scale, screenY + 4 * scale, 1 * scale, 1 * scale);
             }
 
             renderCollectibles() {
+                const centerX = this.canvas.width / 2;
+                const centerY = this.canvas.height / 2;
+                const scale = this.scale;
+
                 this.game.coins.forEach(coin => {
                     if (!coin.collected) {
-                        const screenX = coin.x - this.game.camera.x;
-                        const screenY = coin.y - this.game.camera.y;
+                        const screenX = (coin.x - this.game.camera.x) * scale + centerX;
+                        const screenY = (coin.y - this.game.camera.y) * scale + centerY;
 
                         const pulse = Math.sin(coin.pulse) * 0.2 + 1;
-                        const size = this.ZOOM * 0.6 * pulse;
+                        const size = this.RENDER_ZOOM * 0.6 * pulse;
 
                         this.ctx.shadowColor = '#ffd700';
-                        this.ctx.shadowBlur = 10;
+                        this.ctx.shadowBlur = 10 * scale;
 
                         this.ctx.fillStyle = '#ffd700';
                         this.ctx.beginPath();
@@ -1789,45 +1823,45 @@
                 });
 
                 this.game.checkpoints.forEach(checkpoint => {
-                    const screenX = checkpoint.x - this.game.camera.x + this.ZOOM/2;
-                    const screenY = checkpoint.y - this.game.camera.y + this.ZOOM/2;
+                    const screenX = (checkpoint.x + this.BASE_ZOOM/2 - this.game.camera.x) * scale + centerX;
+                    const screenY = (checkpoint.y + this.BASE_ZOOM/2 - this.game.camera.y) * scale + centerY;
 
                     if (checkpoint.activated) {
                         this.ctx.fillStyle = '#00ff88';
                         this.ctx.shadowColor = '#00ff88';
-                        this.ctx.shadowBlur = 15;
+                        this.ctx.shadowBlur = 15 * scale;
                     } else {
                         this.ctx.fillStyle = '#00ffff';
                         this.ctx.shadowColor = '#00ffff';
-                        this.ctx.shadowBlur = 5;
+                        this.ctx.shadowBlur = 5 * scale;
                     }
 
                     this.ctx.fillRect(
-                        screenX - this.ZOOM/2,
-                        screenY - this.ZOOM/2,
-                        this.ZOOM,
-                        this.ZOOM
+                        screenX - this.RENDER_ZOOM/2,
+                        screenY - this.RENDER_ZOOM/2,
+                        this.RENDER_ZOOM,
+                        this.RENDER_ZOOM
                     );
 
                     this.ctx.shadowBlur = 0;
 
                     this.ctx.fillStyle = 'white';
-                    this.ctx.font = `${this.ZOOM/2}px Arial`;
+                    this.ctx.font = `${this.RENDER_ZOOM / 2}px Arial`;
                     this.ctx.textAlign = 'center';
-                    this.ctx.fillText('🚩', screenX, screenY + 3);
+                    this.ctx.fillText('🚩', screenX, screenY + 3 * scale);
                 });
 
                 this.game.levers.forEach(lever => {
-                    const screenX = lever.x - this.game.camera.x + this.ZOOM/2;
-                    const screenY = lever.y - this.game.camera.y + this.ZOOM/2;
+                    const screenX = (lever.x + this.BASE_ZOOM/2 - this.game.camera.x) * scale + centerX;
+                    const screenY = (lever.y + this.BASE_ZOOM/2 - this.game.camera.y) * scale + centerY;
 
                     let fillColor = lever.activated ? '#00ff00' : '#ffa500';
                     let shadowColor = lever.activated ? '#00ff00' : '#ffa500';
-                    let shadowBlur = lever.activated ? 15 : 5;
+                    let shadowBlur = lever.activated ? 15 * scale : 5 * scale;
 
                     if (!lever.activated) {
                         lever.pulse += 0.1;
-                        shadowBlur = Math.sin(lever.pulse) * 5 + 10;
+                        shadowBlur = Math.sin(lever.pulse) * 5 * scale + 10 * scale;
                     }
 
                     this.ctx.fillStyle = fillColor;
@@ -1835,30 +1869,34 @@
                     this.ctx.shadowBlur = shadowBlur;
 
                     this.ctx.fillRect(
-                        screenX - this.ZOOM/2,
-                        screenY - this.ZOOM/2,
-                        this.ZOOM,
-                        this.ZOOM
+                        screenX - this.RENDER_ZOOM/2,
+                        screenY - this.RENDER_ZOOM/2,
+                        this.RENDER_ZOOM,
+                        this.RENDER_ZOOM
                     );
 
                     this.ctx.shadowBlur = 0;
 
                     this.ctx.fillStyle = 'white';
-                    this.ctx.font = `${this.ZOOM/2}px Arial`;
+                    this.ctx.font = `${this.RENDER_ZOOM / 2}px Arial`;
                     this.ctx.textAlign = 'center';
-                    this.ctx.fillText('🔀', screenX, screenY + 3);
+                    this.ctx.fillText('🔀', screenX, screenY + 3 * scale);
                 });
             }
 
             renderParticles() {
+                const centerX = this.canvas.width / 2;
+                const centerY = this.canvas.height / 2;
+                const scale = this.scale;
+
                 this.particles.forEach(particle => {
                     this.ctx.globalAlpha = particle.life;
                     this.ctx.fillStyle = particle.color;
 
-                    const screenX = particle.x - this.game.camera.x;
-                    const screenY = particle.y - this.game.camera.y;
+                    const screenX = (particle.x - this.game.camera.x) * scale + centerX;
+                    const screenY = (particle.y - this.game.camera.y) * scale + centerY;
 
-                    this.ctx.fillRect(screenX - 1, screenY - 1, 2, 2);
+                    this.ctx.fillRect(screenX - 1 * scale, screenY - 1 * scale, 2 * scale, 2 * scale);
                 });
                 this.ctx.globalAlpha = 1;
             }
@@ -1869,7 +1907,7 @@
                     debugInfo.style.display = 'block';
                     debugInfo.innerHTML = `
                         <strong>🔧 DEBUG MODE</strong><br>
-                        Position: ${Math.floor(this.player.x/this.ZOOM)}, ${Math.floor(this.player.y/this.ZOOM)}<br>
+                        Position: ${Math.floor(this.player.x/this.BASE_ZOOM)}, ${Math.floor(this.player.y/this.BASE_ZOOM)}<br>
                         Vitesse: ${this.player.vx.toFixed(1)}, ${this.player.vy.toFixed(1)}<br>
                         Au sol: ${this.player.onGround ? 'Oui' : 'Non'}<br>
                         Caméra: ${Math.floor(this.game.camera.x)}, ${Math.floor(this.game.camera.y)}<br>
@@ -1877,36 +1915,47 @@
                         Particules: ${this.particles.length}<br>
                         FPS: ${Math.round(1000 / (Date.now() - (this.lastFrame || Date.now())))}<br>
                         Manettes: ${this.gamepads.length}<br>
+                        Zoom: ${this.RENDER_ZOOM}<br>
                     `;
                 }
 
                 this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
                 this.ctx.lineWidth = 1;
 
-                const startX = Math.floor(this.game.camera.x / this.ZOOM) * this.ZOOM;
-                const startY = Math.floor(this.game.camera.y / this.ZOOM) * this.ZOOM;
+                const scale = this.scale;
+                const centerX = this.canvas.width / 2;
+                const centerY = this.canvas.height / 2;
 
-                for (let x = startX; x < this.game.camera.x + this.canvas.width; x += this.ZOOM) {
+                // Vertical lines
+                let startWorldX = Math.floor(this.game.camera.x / this.BASE_ZOOM) * this.BASE_ZOOM;
+                for (let wx = startWorldX; wx < this.game.camera.x + this.canvas.width / scale; wx += this.BASE_ZOOM) {
+                    const screenX = (wx - this.game.camera.x) * scale + centerX;
                     this.ctx.beginPath();
-                    this.ctx.moveTo(x - this.game.camera.x, 0);
-                    this.ctx.lineTo(x - this.game.camera.x, this.canvas.height);
+                    this.ctx.moveTo(screenX, 0);
+                    this.ctx.lineTo(screenX, this.canvas.height);
                     this.ctx.stroke();
                 }
 
-                for (let y = startY; y < this.game.camera.y + this.canvas.height; y += this.ZOOM) {
+                // Horizontal lines
+                let startWorldY = Math.floor(this.game.camera.y / this.BASE_ZOOM) * this.BASE_ZOOM;
+                for (let wy = startWorldY; wy < this.game.camera.y + this.canvas.height / scale; wy += this.BASE_ZOOM) {
+                    const screenY = (wy - this.game.camera.y) * scale + centerY;
                     this.ctx.beginPath();
-                    this.ctx.moveTo(0, y - this.game.camera.y);
-                    this.ctx.lineTo(this.canvas.width, y - this.game.camera.y);
+                    this.ctx.moveTo(0, screenY);
+                    this.ctx.lineTo(this.canvas.width, screenY);
                     this.ctx.stroke();
                 }
 
+                // Player collision box
+                const pScreenX = (this.player.x - this.game.camera.x) * scale + centerX;
+                const pScreenY = (this.player.y - this.game.camera.y) * scale + centerY;
                 this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
-                this.ctx.lineWidth = 2;
+                this.ctx.lineWidth = 2 * scale;
                 this.ctx.strokeRect(
-                    this.player.x - this.game.camera.x,
-                    this.player.y - this.game.camera.y,
-                    this.player.width,
-                    this.player.height
+                    pScreenX,
+                    pScreenY,
+                    this.player.width * scale,
+                    this.player.height * scale
                 );
             }
 
