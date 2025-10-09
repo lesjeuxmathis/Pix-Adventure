@@ -1715,11 +1715,12 @@
             }
 
             renderPlayer() {
+                // Rendu des particules de traînée
                 this.ctx.globalAlpha = 0.3;
                 this.player.trail.forEach((point, i) => {
                     const alpha = i / this.player.trail.length;
                     this.ctx.globalAlpha = alpha * 0.3;
-                    this.ctx.fillStyle = this.player.color;
+                    this.ctx.fillStyle = this.player.color; // Utiliser la couleur du joueur pour les particules
                     this.ctx.fillRect(
                         point.x - this.game.camera.x - 2,
                         point.y - this.game.camera.y - 2,
@@ -1731,7 +1732,7 @@
                 const screenX = this.player.x - this.game.camera.x;
                 const screenY = this.player.y - this.game.camera.y;
 
-                // Render the selected skin
+                // Rendu du skin sélectionné
                 const skin = this.skins[this.player.skin] || this.skins.default;
                 skin.render(this.ctx, screenX, screenY, this.player.width, this.player.height, this.player.color, this.player.outlineColor);
             }
