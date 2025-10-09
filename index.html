@@ -389,6 +389,25 @@
             display: block;
             animation: pulse 2s infinite;
         }
+
+        .zoom-control {
+            text-align: center;
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            font-size: 0.9em;
+            color: #aaa;
+        }
+
+        .zoom-control label {
+            color: #4a90e2;
+            font-weight: bold;
+        }
+
+        .zoom-control input {
+            width: 200px;
+        }
     </style>
 </head>
 <body>
@@ -467,6 +486,11 @@
             <div>← → ou A D : Déplacement | ↑ ou W ou ESPACE : Saut</div>
             <div>🎮 Manette : Stick gauche / D-Pad : Déplacement | A : Saut</div>
             <div>F12 : Mode Debug | R : Redémarrer niveau</div>
+        </div>
+
+        <div class="zoom-control">
+            <label for="zoomSlider">Zoom: <span id="zoomValue">20</span></label>
+            <input type="range" id="zoomSlider" min="5" max="50" value="20" step="1">
         </div>
     </div>
 
@@ -679,8 +703,63 @@
                 this.setupEditor();
                 this.setupLanguage();
                 this.setupKeyRemapping();
+                this.setupZoomControl();
                 this.loadDefaultMap();
                 this.gameLoop();
+            }
+
+            setupZoomControl() {
+                const zoomSlider = document.getElementById('zoomSlider');
+                const zoomValue = document.getElementById('zoomValue');
+                zoomSlider.addEventListener('input', (e) => {
+                    const newZoom = parseInt(e.target.value);
+                    zoomValue.textContent = newZoom;
+                    this.setZoom(newZoom);
+                });
+            }
+
+            setZoom(newZoom) {
+                const ratio = newZoom / this.ZOOM;
+
+                this.player.x *= ratio;
+                this.player.y *= ratio;
+                this.player.width *= ratio;
+                this.player.height *= ratio;
+
+                this.game.camera.x *= ratio;
+                this.game.camera.y *= ratio;
+
+                this.game.coins.forEach(coin => {
+                    coin.x *= ratio;
+                    coin.y *= ratio;
+                });
+
+                this.game.checkpoints.forEach(cp => {
+                    cp.x *= ratio;
+                    cp.y *= ratio;
+                });
+
+                this.game.levers.forEach(lev => {
+                    lev.x *= ratio;
+                    lev.y *= ratio;
+                });
+
+                if (this.game.lastCheckpoint) {
+                    this.game.lastCheckpoint.x *= ratio;
+                    this.game.lastCheckpoint.y *= ratio;
+                }
+
+                this.particles.forEach(p => {
+                    p.x *= ratio;
+                    p.y *= ratio;
+                });
+
+                this.player.trail.forEach(t => {
+                    t.x *= ratio;
+                    t.y *= ratio;
+                });
+
+                this.ZOOM = newZoom;
             }
 
             setupGamepad() {
