@@ -1608,21 +1608,25 @@
             }
 
             updateCamera() {
-                const scale = this.scale;
-                const halfWidth = (this.canvas.width / 2) / scale;
-                const halfHeight = (this.canvas.height / 2) / scale;
+                const scale = this.scale; // Échelle basée sur RENDER_ZOOM / BASE_ZOOM
+                const canvasWidth = this.canvas.width / scale; // Largeur visible en coordonnées du monde
+                const canvasHeight = this.canvas.height / scale; // Hauteur visible en coordonnées du monde
 
-                const targetX = this.player.x - halfWidth;
-                const targetY = this.player.y - halfHeight;
+                // Centrer la caméra sur le joueur
+                const targetX = this.player.x + this.player.width / 2 - canvasWidth / 2;
+                const targetY = this.player.y + this.player.height / 2 - canvasHeight / 2;
 
+                // Appliquer un lissage pour un mouvement fluide de la caméra
                 this.game.camera.x += (targetX - this.game.camera.x) * 0.1;
                 this.game.camera.y += (targetY - this.game.camera.y) * 0.1;
 
+                // Limites du monde
                 const worldWidth = this.map.width * this.BASE_ZOOM;
                 const worldHeight = this.map.height * this.BASE_ZOOM;
 
-                this.game.camera.x = Math.max(halfWidth, Math.min(worldWidth - halfWidth, this.game.camera.x));
-                this.game.camera.y = Math.max(halfHeight, Math.min(worldHeight - halfHeight, this.game.camera.y));
+                // Restreindre la caméra aux limites du monde
+                this.game.camera.x = Math.max(0, Math.min(worldWidth - canvasWidth, this.game.camera.x));
+                this.game.camera.y = Math.max(0, Math.min(worldHeight - canvasHeight, this.game.camera.y));
             }
 
             addParticles(x, y, count, color) {
