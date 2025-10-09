@@ -398,15 +398,54 @@
             border-radius: 8px;
             font-size: 0.9em;
             color: #aaa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
 
         .zoom-control label {
             color: #4a90e2;
             font-weight: bold;
+            margin-right: 10px;
         }
 
         .zoom-control input {
-            width: 200px;
+            width: 150px;
+        }
+
+        .zoom-btn {
+            background: linear-gradient(45deg, #4a90e2, #357abd);
+            border: none;
+            border-radius: 5px;
+            color: white;
+            padding: 5px 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            width: 30px;
+            height: 30px;
+        }
+
+        .zoom-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(74, 144, 226, 0.4);
+        }
+
+        .game-container.fullscreen .zoom-control {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #4a90e2;
+        }
+
+        .game-container.fullscreen .controls {
+            display: none;
         }
     </style>
 </head>
@@ -490,7 +529,9 @@
 
         <div class="zoom-control">
             <label for="zoomSlider">Zoom: <span id="zoomValue">20</span></label>
+            <button id="zoomOut" class="zoom-btn" title="Dézoomer">-</button>
             <input type="range" id="zoomSlider" min="5" max="50" value="20" step="1">
+            <button id="zoomIn" class="zoom-btn" title="Zoomer">+</button>
         </div>
     </div>
 
@@ -711,55 +752,39 @@
             setupZoomControl() {
                 const zoomSlider = document.getElementById('zoomSlider');
                 const zoomValue = document.getElementById('zoomValue');
+                const zoomIn = document.getElementById('zoomIn');
+                const zoomOut = document.getElementById('zoomOut');
+
+                const updateZoom = (newZoom) => {
+                    this.ZOOM = newZoom;
+                    zoomSlider.value = newZoom;
+                    zoomValue.textContent = newZoom;
+                    this.player.width = this.ZOOM * 0.8;
+                    this.player.height = this.ZOOM * 0.8;
+                };
+
                 zoomSlider.addEventListener('input', (e) => {
                     const newZoom = parseInt(e.target.value);
-                    zoomValue.textContent = newZoom;
-                    this.setZoom(newZoom);
-                });
-            }
-
-            setZoom(newZoom) {
-                const ratio = newZoom / this.ZOOM;
-
-                this.player.x *= ratio;
-                this.player.y *= ratio;
-                this.player.width *= ratio;
-                this.player.height *= ratio;
-
-                this.game.camera.x *= ratio;
-                this.game.camera.y *= ratio;
-
-                this.game.coins.forEach(coin => {
-                    coin.x *= ratio;
-                    coin.y *= ratio;
+                    updateZoom(newZoom);
                 });
 
-                this.game.checkpoints.forEach(cp => {
-                    cp.x *= ratio;
-                    cp.y *= ratio;
+                zoomIn.addEventListener('click', () => {
+                    let val = parseInt(zoomSlider.value) + 5;
+                    if (val > 50) val = 50;
+                    updateZoom(val);
                 });
 
-                this.game.levers.forEach(lev => {
-                    lev.x *= ratio;
-                    lev.y *= ratio;
+                zoomOut.addEventListener('click', () => {
+                    let val = parseInt(zoomSlider.value) - 5;
+                    if (val < 5) val = 5;
+                    updateZoom(val);
                 });
 
-                if (this.game.lastCheckpoint) {
-                    this.game.lastCheckpoint.x *= ratio;
-                    this.game.lastCheckpoint.y *= ratio;
-                }
-
-                this.particles.forEach(p => {
-                    p.x *= ratio;
-                    p.y *= ratio;
-                });
-
-                this.player.trail.forEach(t => {
-                    t.x *= ratio;
-                    t.y *= ratio;
-                });
-
-                this.ZOOM = newZoom;
+                // Default zoom 20, max dezoom 5
+                document.getElementById('zoomSlider').min = 5;
+                document.getElementById('zoomSlider').max = 50;
+                document.getElementById('zoomSlider').value = 20;
+                zoomValue.textContent = 20;
             }
 
             setupGamepad() {
