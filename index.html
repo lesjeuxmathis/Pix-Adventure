@@ -676,24 +676,21 @@
                     },
                     halloween: {
                         render: (ctx, x, y, width, height, color, outlineColor) => {
-                            // Jack-o'-lantern skin
+                            // Ombre
                             ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
                             ctx.fillRect(x + 2, y + 2, width, height);
 
-                            // Pumpkin body
-                            ctx.fillStyle = '#ff7518'; // Orange pumpkin color
-                            ctx.beginPath();
-                            ctx.arc(x + width / 2, y + height / 2, width / 2, 0, Math.PI * 2);
-                            ctx.fill();
+                            // Corps de la citrouille (carré, style Minecraft)
+                            ctx.fillStyle = '#ff7518'; // Orange pour la citrouille
+                            ctx.fillRect(x, y, width, height);
 
+                            // Contour personnalisable
                             ctx.strokeStyle = outlineColor;
                             ctx.lineWidth = 1;
-                            ctx.beginPath();
-                            ctx.arc(x + width / 2, y + height / 2, width / 2, 0, Math.PI * 2);
-                            ctx.stroke();
+                            ctx.strokeRect(x, y, width, height);
 
-                            // Carved eyes (triangles)
-                            ctx.fillStyle = '#ffff00'; // Yellow glow
+                            // Yeux triangulaires
+                            ctx.fillStyle = '#ffff00'; // Jaune pour l'effet lumineux
                             ctx.beginPath();
                             ctx.moveTo(x + width * 0.3, y + height * 0.3);
                             ctx.lineTo(x + width * 0.4, y + height * 0.5);
@@ -708,13 +705,15 @@
                             ctx.closePath();
                             ctx.fill();
 
-                            // Carved mouth (jagged smile)
+                            // Bouche en zigzag
+                            ctx.fillStyle = '#ffff00';
                             ctx.beginPath();
                             ctx.moveTo(x + width * 0.3, y + height * 0.7);
                             ctx.lineTo(x + width * 0.4, y + height * 0.65);
                             ctx.lineTo(x + width * 0.5, y + height * 0.7);
                             ctx.lineTo(x + width * 0.6, y + height * 0.65);
                             ctx.lineTo(x + width * 0.7, y + height * 0.7);
+                            ctx.closePath();
                             ctx.fill();
                         }
                     }
@@ -1347,6 +1346,7 @@
                 this.player.vy += this.GRAVITY;
                 this.player.vy = Math.min(this.player.vy, this.MAX_FALL_SPEED);
 
+                // Vérifier la collision horizontale
                 const newX = this.player.x + this.player.vx;
                 if (!this.checkCollision(newX, this.player.y, this.player.width, this.player.height)) {
                     this.player.x = newX;
@@ -1354,20 +1354,26 @@
                     this.player.vx = 0;
                 }
 
+                // Vérifier la collision verticale
                 const newY = this.player.y + this.player.vy;
                 if (!this.checkCollision(this.player.x, newY, this.player.width, this.player.height)) {
                     this.player.y = newY;
                     this.player.onGround = false;
                 } else {
                     if (this.player.vy > 0) {
+                        // Atterrissage au sol
                         this.player.onGround = true;
                         if (!wasOnGround) {
                             this.addParticles(this.player.x + this.player.width/2, this.player.y + this.player.height, 3, '#ffd700');
                         }
+                    } else if (this.player.vy < 0) {
+                        // Collision avec le plafond (tête)
+                        this.addParticles(this.player.x + this.player.width/2, this.player.y, 5, '#ffffff');
                     }
                     this.player.vy = 0;
                 }
 
+                // Mettre à jour la traînée
                 this.player.trail.push({
                     x: this.player.x + this.player.width/2,
                     y: this.player.y + this.player.height/2,
@@ -1715,12 +1721,11 @@
             }
 
             renderPlayer() {
-                // Rendu des particules de traînée
                 this.ctx.globalAlpha = 0.3;
                 this.player.trail.forEach((point, i) => {
                     const alpha = i / this.player.trail.length;
                     this.ctx.globalAlpha = alpha * 0.3;
-                    this.ctx.fillStyle = this.player.color; // Utiliser la couleur du joueur pour les particules
+                    this.ctx.fillStyle = this.player.color;
                     this.ctx.fillRect(
                         point.x - this.game.camera.x - 2,
                         point.y - this.game.camera.y - 2,
@@ -1732,7 +1737,6 @@
                 const screenX = this.player.x - this.game.camera.x;
                 const screenY = this.player.y - this.game.camera.y;
 
-                // Rendu du skin sélectionné
                 const skin = this.skins[this.player.skin] || this.skins.default;
                 skin.render(this.ctx, screenX, screenY, this.player.width, this.player.height, this.player.color, this.player.outlineColor);
             }
@@ -1826,18 +1830,14 @@
             }
 
             renderParticles() {
-                const centerX = this.canvas.width / 2;
-                const centerY = this.canvas.height / 2;
-                const scale = this.scale;
-
                 this.particles.forEach(particle => {
                     this.ctx.globalAlpha = particle.life;
                     this.ctx.fillStyle = particle.color;
 
-                    const screenX = (particle.x - this.game.camera.x) * scale + centerX;
-                    const screenY = (particle.y - this.game.camera.y) * scale + centerY;
+                    const screenX = particle.x - this.game.camera.x;
+                    const screenY = particle.y - this.game.camera.y;
 
-                    this.ctx.fillRect(screenX - 1 * scale, screenY - 1 * scale, 2 * scale, 2 * scale);
+                    this.ctx.fillRect(screenX - 1, screenY - 1, 2, 2);
                 });
                 this.ctx.globalAlpha = 1;
             }
@@ -1848,76 +1848,53 @@
                     debugInfo.style.display = 'block';
                     debugInfo.innerHTML = `
                         <strong>🔧 DEBUG MODE</strong><br>
-                        Position: ${Math.floor(this.player.x/this.BASE_ZOOM)}, ${Math.floor(this.player.y/this.BASE_ZOOM)}<br>
+                        Position: ${Math.floor(this.player.x/this.ZOOM)}, ${Math.floor(this.player.y/this.ZOOM)}<br>
                         Vitesse: ${this.player.vx.toFixed(1)}, ${this.player.vy.toFixed(1)}<br>
                         Au sol: ${this.player.onGround ? 'Oui' : 'Non'}<br>
                         Caméra: ${Math.floor(this.game.camera.x)}, ${Math.floor(this.game.camera.y)}<br>
                         Pièces: ${this.game.coins.filter(c => !c.collected).length}/${this.game.coins.length}<br>
                         Particules: ${this.particles.length}<br>
                         FPS: ${Math.round(1000 / (Date.now() - (this.lastFrame || Date.now())))}<br>
-                        Manettes: ${this.gamepads.length}<br>
-                        Zoom: ${this.RENDER_ZOOM}<br>
                     `;
                 }
 
                 this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
                 this.ctx.lineWidth = 1;
 
-                const scale = this.scale;
-                const centerX = this.canvas.width / 2;
-                const centerY = this.canvas.height / 2;
+                const startX = Math.floor(this.game.camera.x / this.ZOOM) * this.ZOOM;
+                const startY = Math.floor(this.game.camera.y / this.ZOOM) * this.ZOOM;
 
-                // Vertical lines
-                let startWorldX = Math.floor(this.game.camera.x / this.BASE_ZOOM) * this.BASE_ZOOM;
-                for (let wx = startWorldX; wx < this.game.camera.x + this.canvas.width / scale; wx += this.BASE_ZOOM) {
-                    const screenX = (wx - this.game.camera.x) * scale + centerX;
+                for (let x = startX; x < this.game.camera.x + this.canvas.width; x += this.ZOOM) {
                     this.ctx.beginPath();
-                    this.ctx.moveTo(screenX, 0);
-                    this.ctx.lineTo(screenX, this.canvas.height);
+                    this.ctx.moveTo(x - this.game.camera.x, 0);
+                    this.ctx.lineTo(x - this.game.camera.x, this.canvas.height);
                     this.ctx.stroke();
                 }
 
-                // Horizontal lines
-                let startWorldY = Math.floor(this.game.camera.y / this.BASE_ZOOM) * this.BASE_ZOOM;
-                for (let wy = startWorldY; wy < this.game.camera.y + this.canvas.height / scale; wy += this.BASE_ZOOM) {
-                    const screenY = (wy - this.game.camera.y) * scale + centerY;
+                for (let y = startY; y < this.game.camera.y + this.canvas.height; y += this.ZOOM) {
                     this.ctx.beginPath();
-                    this.ctx.moveTo(0, screenY);
-                    this.ctx.lineTo(this.canvas.width, screenY);
+                    this.ctx.moveTo(0, y - this.game.camera.y);
+                    this.ctx.lineTo(this.canvas.width, y - this.game.camera.y);
                     this.ctx.stroke();
                 }
 
-                // Player collision box
-                const pScreenX = (this.player.x - this.game.camera.x) * scale + centerX;
-                const pScreenY = (this.player.y - this.game.camera.y) * scale + centerY;
                 this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
-                this.ctx.lineWidth = 2 * scale;
+                this.ctx.lineWidth = 2;
                 this.ctx.strokeRect(
-                    pScreenX,
-                    pScreenY,
-                    this.player.width * scale,
-                    this.player.height * scale
+                    this.player.x - this.game.camera.x,
+                    this.player.y - this.game.camera.y,
+                    this.player.width,
+                    this.player.height
                 );
             }
 
-            toggleDebug() {
-                this.gameState.debugMode = !this.gameState.debugMode;
-                const debugInfo = document.getElementById('debugInfo');
-                if (debugInfo && !this.gameState.debugMode) {
-                    debugInfo.style.display = 'none';
-                }
-            }
-
-            showMessage(text, duration = 3000) {
-                const messageEl = document.getElementById('gameMessage');
-                messageEl.textContent = text;
-                messageEl.classList.add('pulsing');
-
+            showMessage(message, duration = 2000) {
+                const messageElement = document.getElementById('gameMessage');
+                messageElement.textContent = message;
+                messageElement.classList.add('pulsing');
                 setTimeout(() => {
-                    messageEl.classList.remove('pulsing');
-                    if (messageEl.textContent === text) {
-                        messageEl.textContent = '';
-                    }
+                    messageElement.textContent = '';
+                    messageElement.classList.remove('pulsing');
                 }, duration);
             }
 
@@ -1926,29 +1903,21 @@
                 document.getElementById('lives').textContent = this.game.lives;
             }
 
+            toggleDebug() {
+                this.gameState.debugMode = !this.gameState.debugMode;
+                document.getElementById('debugInfo').style.display = this.gameState.debugMode ? 'block' : 'none';
+            }
+
             gameLoop() {
-                this.lastFrame = Date.now();
+                const now = Date.now();
                 this.update();
                 this.render();
+                this.lastFrame = now;
                 requestAnimationFrame(() => this.gameLoop());
             }
         }
 
-        window.addEventListener('load', () => {
-            window.game = new PixelPlatformer();
-        });
-
-        document.addEventListener('contextmenu', (e) => {
-            if (e.target.tagName === 'CANVAS') {
-                e.preventDefault();
-            }
-        });
-
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                console.log('Jeu en pause');
-            }
-        });
+        const game = new PixelPlatformer();
     </script>
 </body>
 </html>
