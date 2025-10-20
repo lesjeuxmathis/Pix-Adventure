@@ -357,7 +357,7 @@
             color: white;
         }
 
-        .key-remap-panel {
+        .key-remap-panel, .settings-panel {
             margin-top: 10px;
             padding: 10px;
             background: rgba(74, 144, 226, 0.1);
@@ -366,7 +366,7 @@
             display: none;
         }
 
-        .key-remap-panel.active {
+        .key-remap-panel.active, .settings-panel.active {
             display: block;
         }
 
@@ -459,9 +459,8 @@
                     <option value="default">Défaut</option>
                     <option value="halloween">Jack-o'-lantern (Halloween)</option>
                 </select>
-                <button id="sandboxBtn" class="sandbox-btn">🏖️ Bac à sable</button>
-                <button id="remapBtn" class="sandbox-btn">⌨️ Custom Touches</button>
                 <button id="editorBtn" class="sandbox-btn">🎨 Éditeur</button>
+                <button id="settingsBtn" class="sandbox-btn">⚙️ Paramètres</button>
             </div>
             <div class="ui-item message" id="gameMessage"></div>
             <div class="ui-item lives">❤️ Vies: <span id="lives">3</span></div>
@@ -480,6 +479,21 @@
             <div style="text-align: center; margin-top: 10px;">
                 <button class="remap-btn" onclick="game.saveKeyMap()" style="background: linear-gradient(45deg, #27ae60, #2ecc71);">💾 Sauvegarder</button>
                 <button class="remap-btn" onclick="game.loadDefaultKeys()" style="background: linear-gradient(45deg, #e67e22, #d35400);">🔄 Défaut</button>
+            </div>
+        </div>
+
+        <div class="settings-panel" id="settingsPanel">
+            <div style="text-align: center; margin-bottom: 10px; font-weight: bold; color: #4a90e2;">Paramètres</div>
+            <div>
+                <label for="fpsSlider">FPS:</label>
+                <input type="range" id="fpsSlider" min="10" max="60" step="1" value="60">
+                <span id="fpsValue">60</span>
+            </div>
+            <div style="margin-top: 10px;">
+                <button id="sandboxToggle" class="sandbox-btn">🏖️ Bac à sable</button>
+            </div>
+            <div style="margin-top: 10px;">
+                <button id="remapToggle" class="sandbox-btn">⌨️ Custom Touches</button>
             </div>
         </div>
 
@@ -570,7 +584,11 @@
                         controllerDisconnected: "🎮 Manette déconnectée",
                         keysSaved: "⌨️ Touches sauvegardées !",
                         keysReset: "⌨️ Touches réinitialisées",
-                        skinChanged: "🎨 Skin changé !"
+                        skinChanged: "🎨 Skin changé !",
+                        settings: "Paramètres",
+                        fps: "FPS",
+                        keyCustomization: "Customisation Clavier",
+                        controllerCustomization: "Customisation Manette"
                     },
                     en: {
                         title: "🎮 Pix'Adventure 🎨",
@@ -615,7 +633,11 @@
                         controllerDisconnected: "🎮 Controller disconnected",
                         keysSaved: "⌨️ Keys saved!",
                         keysReset: "⌨️ Keys reset",
-                        skinChanged: "🎨 Skin changed!"
+                        skinChanged: "🎨 Skin changed!",
+                        settings: "Settings",
+                        fps: "FPS",
+                        keyCustomization: "Key Customization",
+                        controllerCustomization: "Controller Customization"
                     }
                 };
 
@@ -773,10 +795,10 @@
                 this.setupFullscreen();
                 this.setupSkinColorPicker();
                 this.setupSkinSelector();
-                this.setupSandboxMode();
                 this.setupEditor();
                 this.setupLanguage();
                 this.setupKeyRemapping();
+                this.setupSettings();
                 this.loadDefaultMap();
                 this.gameLoop();
             }
@@ -917,28 +939,6 @@
                 });
             }
 
-            setupSandboxMode() {
-                const sandboxBtn = document.getElementById('sandboxBtn');
-                sandboxBtn.addEventListener('click', () => {
-                    this.gameState.sandboxMode = !this.gameState.sandboxMode;
-
-                    if (this.gameState.sandboxMode) {
-                        sandboxBtn.textContent = this.t('sandboxActive');
-                        sandboxBtn.classList.add('active');
-                        this.game.lives = 999;
-                        this.showMessage(this.t('sandboxActivated'));
-                    } else {
-                        sandboxBtn.textContent = this.t('sandbox');
-                        sandboxBtn.classList.remove('active');
-                        this.game.lives = 3;
-                        this.playerDeath();
-                        this.showMessage(this.t('normalMode'));
-                    }
-
-                    this.updateUI();
-                });
-            }
-
             setupEditor() {
                 const editorBtn = document.getElementById('editorBtn');
                 editorBtn.addEventListener('click', () => {
@@ -967,9 +967,8 @@
                 document.getElementById('fullscreenBtn').textContent = t.fullscreen;
                 document.querySelector('.score').innerHTML = `${t.score} <span id="score">${this.game.score}</span>`;
                 document.querySelector('.lives').innerHTML = `${t.lives} <span id="lives">${this.game.lives}</span>`;
-                document.getElementById('sandboxBtn').textContent = this.gameState.sandboxMode ? t.sandboxActive : t.sandbox;
                 document.getElementById('editorBtn').textContent = t.editor;
-                document.getElementById('remapBtn').textContent = this.currentLanguage === 'fr' ? '⌨️ Custom Touches' : '⌨️ Custom Keys';
+                document.getElementById('settingsBtn').textContent = `⚙️ ${t.settings}`;
                 document.querySelector('.controls-title').textContent = t.controls;
                 document.querySelector('.controls div:nth-child(2)').textContent = t.controlsText;
                 document.querySelector('.controls div:nth-child(3)').textContent = this.currentLanguage === 'fr' ? '🎮 Manette : Stick gauche / D-Pad : Déplacement | A : Saut' : '🎮 Controller: Left Stick / D-Pad: Move | A: Jump';
@@ -982,8 +981,13 @@
                     document.getElementById('mapInfo').textContent = t.mapInfo;
                 }
                 document.getElementById('controllerIndicator').textContent = t.controllerConnected;
-                document.querySelector('#keyRemapPanel > div:first-child').textContent = this.currentLanguage === 'fr' ? 'Customisation Clavier' : 'Key Customization';
-                document.querySelector('#keyRemapPanel > div:nth-child(4)').textContent = this.currentLanguage === 'fr' ? 'Customisation Manette' : 'Controller Customization';
+                document.querySelector('#settingsPanel > div:first-child').textContent = t.settings;
+                document.querySelector('label[for="fpsSlider"]').textContent = `${t.fps}:`;
+                document.getElementById('sandboxToggle').textContent = this.gameState.sandboxMode ? t.sandboxActive : t.sandbox;
+                document.getElementById('sandboxToggle').classList.toggle('active', this.gameState.sandboxMode);
+                document.getElementById('remapToggle').textContent = this.currentLanguage === 'fr' ? '⌨️ Custom Touches' : '⌨️ Custom Keys';
+                document.querySelector('#keyRemapPanel > div:first-child').textContent = t.keyCustomization;
+                document.querySelector('#keyRemapPanel > div:nth-child(4)').textContent = t.controllerCustomization;
             }
 
             t(key) {
@@ -1031,12 +1035,7 @@
             }
 
             setupKeyRemapping() {
-                const remapBtn = document.getElementById('remapBtn');
                 const panel = document.getElementById('keyRemapPanel');
-
-                remapBtn.addEventListener('click', () => {
-                    panel.classList.toggle('active');
-                });
 
                 document.querySelectorAll('.remap-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
@@ -1912,6 +1911,47 @@
             toggleDebug() {
                 this.gameState.debugMode = !this.gameState.debugMode;
                 document.getElementById('debugInfo').style.display = this.gameState.debugMode ? 'block' : 'none';
+            }
+
+            setupSettings() {
+                const settingsBtn = document.getElementById('settingsBtn');
+                const panel = document.getElementById('settingsPanel');
+
+                settingsBtn.addEventListener('click', () => {
+                    panel.classList.toggle('active');
+                });
+
+                const fpsSlider = document.getElementById('fpsSlider');
+                const fpsValue = document.getElementById('fpsValue');
+                fpsSlider.addEventListener('input', (e) => {
+                    this.targetFPS = parseInt(e.target.value);
+                    this.dt = 1000 / this.targetFPS;
+                    fpsValue.textContent = this.targetFPS;
+                });
+
+                const sandboxToggle = document.getElementById('sandboxToggle');
+                sandboxToggle.addEventListener('click', () => {
+                    this.gameState.sandboxMode = !this.gameState.sandboxMode;
+
+                    if (this.gameState.sandboxMode) {
+                        sandboxToggle.classList.add('active');
+                        this.game.lives = 999;
+                        this.showMessage(this.t('sandboxActivated'));
+                    } else {
+                        sandboxToggle.classList.remove('active');
+                        this.game.lives = 3;
+                        this.playerDeath();
+                        this.showMessage(this.t('normalMode'));
+                    }
+
+                    sandboxToggle.textContent = this.gameState.sandboxMode ? this.t('sandboxActive') : this.t('sandbox');
+                    this.updateUI();
+                });
+
+                const remapToggle = document.getElementById('remapToggle');
+                remapToggle.addEventListener('click', () => {
+                    document.getElementById('keyRemapPanel').classList.toggle('active');
+                });
             }
 
             gameLoop = (timestamp) => {
