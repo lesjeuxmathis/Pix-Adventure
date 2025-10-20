@@ -357,7 +357,7 @@
             color: white;
         }
 
-        .key-remap-panel, .settings-panel {
+        .key-remap-panel {
             margin-top: 10px;
             padding: 10px;
             background: rgba(74, 144, 226, 0.1);
@@ -366,7 +366,7 @@
             display: none;
         }
 
-        .key-remap-panel.active, .settings-panel.active {
+        .key-remap-panel.active {
             display: block;
         }
 
@@ -387,48 +387,6 @@
         .remap-btn:hover {
             transform: translateY(-1px);
             box-shadow: 0 3px 10px rgba(231, 76, 60, 0.4);
-        }
-
-        .settings-title {
-            text-align: center;
-            margin-bottom: 10px;
-            font-weight: bold;
-            color: #4a90e2;
-        }
-
-        .fps-setting {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        #fpsSlider {
-            flex: 1;
-        }
-
-        #fpsValue {
-            font-weight: bold;
-            color: #4a90e2;
-        }
-
-        .close-btn {
-            padding: 5px 10px;
-            background: linear-gradient(45deg, #27ae60, #2ecc71);
-            border: none;
-            border-radius: 5px;
-            color: white;
-            font-family: inherit;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 10px;
-            margin: 2px;
-        }
-
-        .close-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 3px 10px rgba(39, 174, 96, 0.4);
         }
 
         .controller-indicator {
@@ -502,9 +460,8 @@
                     <option value="halloween">Jack-o'-lantern (Halloween)</option>
                 </select>
                 <button id="sandboxBtn" class="sandbox-btn">🏖️ Bac à sable</button>
-                <button id="editorBtn" class="sandbox-btn">🎨 Éditeur</button>
                 <button id="remapBtn" class="sandbox-btn">⌨️ Custom Touches</button>
-                <button id="settingsBtn" class="sandbox-btn">⚙️ Paramètres</button>
+                <button id="editorBtn" class="sandbox-btn">🎨 Éditeur</button>
             </div>
             <div class="ui-item message" id="gameMessage"></div>
             <div class="ui-item lives">❤️ Vies: <span id="lives">3</span></div>
@@ -523,18 +480,6 @@
             <div style="text-align: center; margin-top: 10px;">
                 <button class="remap-btn" onclick="game.saveKeyMap()" style="background: linear-gradient(45deg, #27ae60, #2ecc71);">💾 Sauvegarder</button>
                 <button class="remap-btn" onclick="game.loadDefaultKeys()" style="background: linear-gradient(45deg, #e67e22, #d35400);">🔄 Défaut</button>
-            </div>
-        </div>
-
-        <div class="settings-panel" id="settingsPanel">
-            <div class="settings-title">⚙️ Paramètres</div>
-            <div class="fps-setting">
-                <label>FPS: </label>
-                <input type="range" id="fpsSlider" min="30" max="120" value="60" step="10">
-                <span id="fpsValue">60</span>
-            </div>
-            <div style="text-align: center; margin-top: 10px;">
-                <button class="close-btn" onclick="game.toggleSettings()">✕ Fermer</button>
             </div>
         </div>
 
@@ -562,6 +507,9 @@
                 this.MOVE_SPEED = 3;
                 this.MAX_FALL_SPEED = 15;
                 this.targetFPS = 60;
+                this.dt = 1000 / this.targetFPS;
+                this.lastTime = performance.now();
+                this.accumulator = 0;
 
                 // Couleurs de la map avec tolérance améliorée
                 this.COLORS = {
@@ -590,7 +538,6 @@
                         sandbox: "🏖️ Bac à sable",
                         sandboxActive: "🏖️ Mode Normal",
                         editor: "🎨 Éditeur",
-                        settings: "⚙️ Paramètres",
                         controls: "🎯 CONTRÔLES",
                         controlsText: "← → ou A D : Déplacement | ↑ ou W ou ESPACE : Saut",
                         controlsText2: "F12 : Mode Debug | R : Redémarrer niveau",
@@ -636,7 +583,6 @@
                         sandbox: "🏖️ Sandbox",
                         sandboxActive: "🏖️ Normal Mode",
                         editor: "🎨 Editor",
-                        settings: "⚙️ Settings",
                         controls: "🎯 CONTROLS",
                         controlsText: "← → or A D: Move | ↑ or W or SPACE: Jump",
                         controlsText2: "F12: Debug Mode | R: Restart level",
@@ -831,30 +777,8 @@
                 this.setupEditor();
                 this.setupLanguage();
                 this.setupKeyRemapping();
-                this.setupSettings();
                 this.loadDefaultMap();
                 this.gameLoop();
-            }
-
-            setupSettings() {
-                const settingsBtn = document.getElementById('settingsBtn');
-                const panel = document.getElementById('settingsPanel');
-                settingsBtn.addEventListener('click', () => this.toggleSettings());
-
-                const fpsSlider = document.getElementById('fpsSlider');
-                const fpsValue = document.getElementById('fpsValue');
-                fpsSlider.addEventListener('input', (e) => {
-                    this.targetFPS = parseInt(e.target.value);
-                    fpsValue.textContent = this.targetFPS;
-                });
-
-                // Initial value
-                fpsValue.textContent = this.targetFPS;
-            }
-
-            toggleSettings() {
-                const panel = document.getElementById('settingsPanel');
-                panel.classList.toggle('active');
             }
 
             setupSkinColorPicker() {
@@ -1046,7 +970,6 @@
                 document.getElementById('sandboxBtn').textContent = this.gameState.sandboxMode ? t.sandboxActive : t.sandbox;
                 document.getElementById('editorBtn').textContent = t.editor;
                 document.getElementById('remapBtn').textContent = this.currentLanguage === 'fr' ? '⌨️ Custom Touches' : '⌨️ Custom Keys';
-                document.getElementById('settingsBtn').textContent = this.currentLanguage === 'fr' ? '⚙️ Paramètres' : '⚙️ Settings';
                 document.querySelector('.controls-title').textContent = t.controls;
                 document.querySelector('.controls div:nth-child(2)').textContent = t.controlsText;
                 document.querySelector('.controls div:nth-child(3)').textContent = this.currentLanguage === 'fr' ? '🎮 Manette : Stick gauche / D-Pad : Déplacement | A : Saut' : '🎮 Controller: Left Stick / D-Pad: Move | A: Jump';
@@ -1059,6 +982,8 @@
                     document.getElementById('mapInfo').textContent = t.mapInfo;
                 }
                 document.getElementById('controllerIndicator').textContent = t.controllerConnected;
+                document.querySelector('#keyRemapPanel > div:first-child').textContent = this.currentLanguage === 'fr' ? 'Customisation Clavier' : 'Key Customization';
+                document.querySelector('#keyRemapPanel > div:nth-child(4)').textContent = this.currentLanguage === 'fr' ? 'Customisation Manette' : 'Controller Customization';
             }
 
             t(key) {
@@ -1936,7 +1861,6 @@
                         Pièces: ${this.game.coins.filter(c => !c.collected).length}/${this.game.coins.length}<br>
                         Particules: ${this.particles.length}<br>
                         FPS: ${Math.round(1000 / (Date.now() - (this.lastFrame || Date.now())))}<br>
-                        FPS Cible: ${this.targetFPS}<br>
                     `;
                 }
 
@@ -1990,16 +1914,23 @@
                 document.getElementById('debugInfo').style.display = this.gameState.debugMode ? 'block' : 'none';
             }
 
-            gameLoop() {
-                const now = Date.now();
-                if (this.lastFrame === undefined) this.lastFrame = now;
-                const delta = now - this.lastFrame;
-                if (delta >= 1000 / this.targetFPS) {
+            gameLoop = (timestamp) => {
+                if (timestamp === undefined) timestamp = performance.now();
+                const frameTime = timestamp - this.lastTime;
+                this.lastTime = timestamp;
+
+                this.accumulator += frameTime;
+
+                const step = this.dt;
+
+                while (this.accumulator >= step) {
                     this.update();
-                    this.render();
-                    this.lastFrame = now;
+                    this.accumulator -= step;
                 }
-                requestAnimationFrame(() => this.gameLoop());
+
+                this.render();
+
+                requestAnimationFrame(this.gameLoop);
             }
         }
 
