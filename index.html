@@ -389,6 +389,48 @@
             box-shadow: 0 3px 10px rgba(231, 76, 60, 0.4);
         }
 
+        .settings-title {
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #4a90e2;
+        }
+
+        .fps-setting {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        #fpsSlider {
+            flex: 1;
+        }
+
+        #fpsValue {
+            font-weight: bold;
+            color: #4a90e2;
+        }
+
+        .close-btn {
+            padding: 5px 10px;
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 10px;
+            margin: 2px;
+        }
+
+        .close-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(39, 174, 96, 0.4);
+        }
+
         .controller-indicator {
             position: absolute;
             top: 20px;
@@ -459,7 +501,9 @@
                     <option value="default">Défaut</option>
                     <option value="halloween">Jack-o'-lantern (Halloween)</option>
                 </select>
+                <button id="sandboxBtn" class="sandbox-btn">🏖️ Bac à sable</button>
                 <button id="editorBtn" class="sandbox-btn">🎨 Éditeur</button>
+                <button id="remapBtn" class="sandbox-btn">⌨️ Custom Touches</button>
                 <button id="settingsBtn" class="sandbox-btn">⚙️ Paramètres</button>
             </div>
             <div class="ui-item message" id="gameMessage"></div>
@@ -483,17 +527,14 @@
         </div>
 
         <div class="settings-panel" id="settingsPanel">
-            <div style="text-align: center; margin-bottom: 10px; font-weight: bold; color: #4a90e2;">Paramètres</div>
-            <div>
-                <label for="fpsSlider">FPS:</label>
-                <input type="range" id="fpsSlider" min="10" max="60" step="1" value="60">
+            <div class="settings-title">⚙️ Paramètres</div>
+            <div class="fps-setting">
+                <label>FPS: </label>
+                <input type="range" id="fpsSlider" min="30" max="120" value="60" step="10">
                 <span id="fpsValue">60</span>
             </div>
-            <div style="margin-top: 10px;">
-                <button id="sandboxToggle" class="sandbox-btn">🏖️ Bac à sable</button>
-            </div>
-            <div style="margin-top: 10px;">
-                <button id="remapToggle" class="sandbox-btn">⌨️ Custom Touches</button>
+            <div style="text-align: center; margin-top: 10px;">
+                <button class="close-btn" onclick="game.toggleSettings()">✕ Fermer</button>
             </div>
         </div>
 
@@ -521,9 +562,6 @@
                 this.MOVE_SPEED = 3;
                 this.MAX_FALL_SPEED = 15;
                 this.targetFPS = 60;
-                this.dt = 1000 / this.targetFPS;
-                this.lastTime = performance.now();
-                this.accumulator = 0;
 
                 // Couleurs de la map avec tolérance améliorée
                 this.COLORS = {
@@ -552,6 +590,7 @@
                         sandbox: "🏖️ Bac à sable",
                         sandboxActive: "🏖️ Mode Normal",
                         editor: "🎨 Éditeur",
+                        settings: "⚙️ Paramètres",
                         controls: "🎯 CONTRÔLES",
                         controlsText: "← → ou A D : Déplacement | ↑ ou W ou ESPACE : Saut",
                         controlsText2: "F12 : Mode Debug | R : Redémarrer niveau",
@@ -584,11 +623,7 @@
                         controllerDisconnected: "🎮 Manette déconnectée",
                         keysSaved: "⌨️ Touches sauvegardées !",
                         keysReset: "⌨️ Touches réinitialisées",
-                        skinChanged: "🎨 Skin changé !",
-                        settings: "Paramètres",
-                        fps: "FPS",
-                        keyCustomization: "Customisation Clavier",
-                        controllerCustomization: "Customisation Manette"
+                        skinChanged: "🎨 Skin changé !"
                     },
                     en: {
                         title: "🎮 Pix'Adventure 🎨",
@@ -601,6 +636,7 @@
                         sandbox: "🏖️ Sandbox",
                         sandboxActive: "🏖️ Normal Mode",
                         editor: "🎨 Editor",
+                        settings: "⚙️ Settings",
                         controls: "🎯 CONTROLS",
                         controlsText: "← → or A D: Move | ↑ or W or SPACE: Jump",
                         controlsText2: "F12: Debug Mode | R: Restart level",
@@ -633,11 +669,7 @@
                         controllerDisconnected: "🎮 Controller disconnected",
                         keysSaved: "⌨️ Keys saved!",
                         keysReset: "⌨️ Keys reset",
-                        skinChanged: "🎨 Skin changed!",
-                        settings: "Settings",
-                        fps: "FPS",
-                        keyCustomization: "Key Customization",
-                        controllerCustomization: "Controller Customization"
+                        skinChanged: "🎨 Skin changed!"
                     }
                 };
 
@@ -795,12 +827,34 @@
                 this.setupFullscreen();
                 this.setupSkinColorPicker();
                 this.setupSkinSelector();
+                this.setupSandboxMode();
                 this.setupEditor();
                 this.setupLanguage();
                 this.setupKeyRemapping();
                 this.setupSettings();
                 this.loadDefaultMap();
                 this.gameLoop();
+            }
+
+            setupSettings() {
+                const settingsBtn = document.getElementById('settingsBtn');
+                const panel = document.getElementById('settingsPanel');
+                settingsBtn.addEventListener('click', () => this.toggleSettings());
+
+                const fpsSlider = document.getElementById('fpsSlider');
+                const fpsValue = document.getElementById('fpsValue');
+                fpsSlider.addEventListener('input', (e) => {
+                    this.targetFPS = parseInt(e.target.value);
+                    fpsValue.textContent = this.targetFPS;
+                });
+
+                // Initial value
+                fpsValue.textContent = this.targetFPS;
+            }
+
+            toggleSettings() {
+                const panel = document.getElementById('settingsPanel');
+                panel.classList.toggle('active');
             }
 
             setupSkinColorPicker() {
@@ -939,6 +993,28 @@
                 });
             }
 
+            setupSandboxMode() {
+                const sandboxBtn = document.getElementById('sandboxBtn');
+                sandboxBtn.addEventListener('click', () => {
+                    this.gameState.sandboxMode = !this.gameState.sandboxMode;
+
+                    if (this.gameState.sandboxMode) {
+                        sandboxBtn.textContent = this.t('sandboxActive');
+                        sandboxBtn.classList.add('active');
+                        this.game.lives = 999;
+                        this.showMessage(this.t('sandboxActivated'));
+                    } else {
+                        sandboxBtn.textContent = this.t('sandbox');
+                        sandboxBtn.classList.remove('active');
+                        this.game.lives = 3;
+                        this.playerDeath();
+                        this.showMessage(this.t('normalMode'));
+                    }
+
+                    this.updateUI();
+                });
+            }
+
             setupEditor() {
                 const editorBtn = document.getElementById('editorBtn');
                 editorBtn.addEventListener('click', () => {
@@ -967,8 +1043,10 @@
                 document.getElementById('fullscreenBtn').textContent = t.fullscreen;
                 document.querySelector('.score').innerHTML = `${t.score} <span id="score">${this.game.score}</span>`;
                 document.querySelector('.lives').innerHTML = `${t.lives} <span id="lives">${this.game.lives}</span>`;
+                document.getElementById('sandboxBtn').textContent = this.gameState.sandboxMode ? t.sandboxActive : t.sandbox;
                 document.getElementById('editorBtn').textContent = t.editor;
-                document.getElementById('settingsBtn').textContent = `⚙️ ${t.settings}`;
+                document.getElementById('remapBtn').textContent = this.currentLanguage === 'fr' ? '⌨️ Custom Touches' : '⌨️ Custom Keys';
+                document.getElementById('settingsBtn').textContent = this.currentLanguage === 'fr' ? '⚙️ Paramètres' : '⚙️ Settings';
                 document.querySelector('.controls-title').textContent = t.controls;
                 document.querySelector('.controls div:nth-child(2)').textContent = t.controlsText;
                 document.querySelector('.controls div:nth-child(3)').textContent = this.currentLanguage === 'fr' ? '🎮 Manette : Stick gauche / D-Pad : Déplacement | A : Saut' : '🎮 Controller: Left Stick / D-Pad: Move | A: Jump';
@@ -981,13 +1059,6 @@
                     document.getElementById('mapInfo').textContent = t.mapInfo;
                 }
                 document.getElementById('controllerIndicator').textContent = t.controllerConnected;
-                document.querySelector('#settingsPanel > div:first-child').textContent = t.settings;
-                document.querySelector('label[for="fpsSlider"]').textContent = `${t.fps}:`;
-                document.getElementById('sandboxToggle').textContent = this.gameState.sandboxMode ? t.sandboxActive : t.sandbox;
-                document.getElementById('sandboxToggle').classList.toggle('active', this.gameState.sandboxMode);
-                document.getElementById('remapToggle').textContent = this.currentLanguage === 'fr' ? '⌨️ Custom Touches' : '⌨️ Custom Keys';
-                document.querySelector('#keyRemapPanel > div:first-child').textContent = t.keyCustomization;
-                document.querySelector('#keyRemapPanel > div:nth-child(4)').textContent = t.controllerCustomization;
             }
 
             t(key) {
@@ -1035,7 +1106,12 @@
             }
 
             setupKeyRemapping() {
+                const remapBtn = document.getElementById('remapBtn');
                 const panel = document.getElementById('keyRemapPanel');
+
+                remapBtn.addEventListener('click', () => {
+                    panel.classList.toggle('active');
+                });
 
                 document.querySelectorAll('.remap-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
@@ -1860,6 +1936,7 @@
                         Pièces: ${this.game.coins.filter(c => !c.collected).length}/${this.game.coins.length}<br>
                         Particules: ${this.particles.length}<br>
                         FPS: ${Math.round(1000 / (Date.now() - (this.lastFrame || Date.now())))}<br>
+                        FPS Cible: ${this.targetFPS}<br>
                     `;
                 }
 
@@ -1913,64 +1990,16 @@
                 document.getElementById('debugInfo').style.display = this.gameState.debugMode ? 'block' : 'none';
             }
 
-            setupSettings() {
-                const settingsBtn = document.getElementById('settingsBtn');
-                const panel = document.getElementById('settingsPanel');
-
-                settingsBtn.addEventListener('click', () => {
-                    panel.classList.toggle('active');
-                });
-
-                const fpsSlider = document.getElementById('fpsSlider');
-                const fpsValue = document.getElementById('fpsValue');
-                fpsSlider.addEventListener('input', (e) => {
-                    this.targetFPS = parseInt(e.target.value);
-                    this.dt = 1000 / this.targetFPS;
-                    fpsValue.textContent = this.targetFPS;
-                });
-
-                const sandboxToggle = document.getElementById('sandboxToggle');
-                sandboxToggle.addEventListener('click', () => {
-                    this.gameState.sandboxMode = !this.gameState.sandboxMode;
-
-                    if (this.gameState.sandboxMode) {
-                        sandboxToggle.classList.add('active');
-                        this.game.lives = 999;
-                        this.showMessage(this.t('sandboxActivated'));
-                    } else {
-                        sandboxToggle.classList.remove('active');
-                        this.game.lives = 3;
-                        this.playerDeath();
-                        this.showMessage(this.t('normalMode'));
-                    }
-
-                    sandboxToggle.textContent = this.gameState.sandboxMode ? this.t('sandboxActive') : this.t('sandbox');
-                    this.updateUI();
-                });
-
-                const remapToggle = document.getElementById('remapToggle');
-                remapToggle.addEventListener('click', () => {
-                    document.getElementById('keyRemapPanel').classList.toggle('active');
-                });
-            }
-
-            gameLoop = (timestamp) => {
-                if (timestamp === undefined) timestamp = performance.now();
-                const frameTime = timestamp - this.lastTime;
-                this.lastTime = timestamp;
-
-                this.accumulator += frameTime;
-
-                const step = this.dt;
-
-                while (this.accumulator >= step) {
+            gameLoop() {
+                const now = Date.now();
+                if (this.lastFrame === undefined) this.lastFrame = now;
+                const delta = now - this.lastFrame;
+                if (delta >= 1000 / this.targetFPS) {
                     this.update();
-                    this.accumulator -= step;
+                    this.render();
+                    this.lastFrame = now;
                 }
-
-                this.render();
-
-                requestAnimationFrame(this.gameLoop);
+                requestAnimationFrame(() => this.gameLoop());
             }
         }
 
