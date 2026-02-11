@@ -162,6 +162,7 @@
             border-radius: 15px;
             border: 2px solid #4a90e2;
             box-shadow: 0 0 30px rgba(74, 144, 226, 0.3);
+            position: relative;
         }
 
         .header {
@@ -461,6 +462,87 @@
         .drop-zone-text { color: #aaa; font-size: 0.82em; margin-bottom: 8px; }
         .drop-zone-text span { color: #4a90e2; text-decoration: underline; }
         .drop-zone.hidden { display: none !important; }
+        /* Overlay de drag-and-drop sur le canvas quand une map est déjà chargée */
+        .canvas-drop-overlay {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(74, 144, 226, 0.18);
+            border: 3px dashed #4a90e2;
+            border-radius: 8px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 9000;
+            pointer-events: none;
+            animation: borderPulse 0.8s infinite alternate;
+        }
+        .canvas-drop-overlay.active { display: flex; }
+        .canvas-drop-overlay-text {
+            color: white;
+            font-family: 'Courier New', monospace;
+            font-size: 1.4em;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(74, 144, 226, 0.8);
+            text-align: center;
+        }
+        /* Modal de confirmation remplacement map */
+        .confirm-modal {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.75);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+            animation: fadeIn 0.2s ease;
+        }
+        .confirm-modal.active { display: flex; }
+        .confirm-box {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 2px solid #4a90e2;
+            border-radius: 15px;
+            padding: 35px 40px;
+            text-align: center;
+            max-width: 400px;
+            box-shadow: 0 0 40px rgba(74, 144, 226, 0.4);
+            animation: scaleIn 0.2s ease;
+        }
+        @keyframes scaleIn {
+            from { transform: scale(0.85); opacity: 0; }
+            to   { transform: scale(1);    opacity: 1; }
+        }
+        .confirm-icon { font-size: 3em; margin-bottom: 12px; }
+        .confirm-title {
+            color: #4a90e2;
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .confirm-text { color: #aaa; font-size: 0.9em; margin-bottom: 25px; line-height: 1.5; }
+        .confirm-filename { color: white; font-weight: bold; }
+        .confirm-buttons { display: flex; gap: 15px; justify-content: center; }
+        .confirm-yes {
+            padding: 12px 28px;
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            border: none; border-radius: 8px;
+            color: white; font-family: inherit;
+            font-weight: bold; font-size: 1em;
+            cursor: pointer; transition: all 0.2s ease;
+        }
+        .confirm-yes:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(231,76,60,0.5); }
+        .confirm-no {
+            padding: 12px 28px;
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+            border: none; border-radius: 8px;
+            color: white; font-family: inherit;
+            font-weight: bold; font-size: 1em;
+            cursor: pointer; transition: all 0.2s ease;
+        }
+        .confirm-no:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(39,174,96,0.5); }
+        /* Le game-container doit être position:relative pour l'overlay */
         .timer { color: #4ecdc4; }
         .color-legend {
             display: flex;
@@ -499,7 +581,25 @@
     </style>
 </head>
 <body>
-    <div class="game-container">
+    <div class="game-container" id="gameContainer">
+        <div class="canvas-drop-overlay" id="canvasDropOverlay">
+            <div class="canvas-drop-overlay-text">🗂️<br>Déposer pour changer la map</div>
+        </div>
+        <div class="confirm-modal" id="confirmModal">
+            <div class="confirm-box">
+                <div class="confirm-icon">⚠️</div>
+                <div class="confirm-title">Remplacer la map ?</div>
+                <div class="confirm-text">
+                    Voulez-vous vraiment remplacer la map actuelle par<br>
+                    <span class="confirm-filename" id="confirmFilename"></span> ?<br><br>
+                    La progression en cours sera perdue.
+                </div>
+                <div class="confirm-buttons">
+                    <button class="confirm-yes" id="confirmYes">✅ Oui, remplacer</button>
+                    <button class="confirm-no" id="confirmNo">❌ Non, annuler</button>
+                </div>
+            </div>
+        </div>
         <button id="fullscreenBtn" class="fullscreen-btn">🔳 Plein Écran</button>
         <div class="controller-indicator" id="controllerIndicator">🎮 Manette connectée !</div>
         <div class="language-selector">
@@ -910,6 +1010,15 @@
                 this.gameLoop();
             }
 
+            showReplaceConfirm(filename) {
+                document.getElementById('confirmFilename').textContent = filename;
+                document.getElementById('confirmModal').classList.add('active');
+            }
+
+            hideReplaceConfirm() {
+                document.getElementById('confirmModal').classList.remove('active');
+            }
+
             hideDropZone() {
                 const dz = document.getElementById('dropZone');
                 if (dz) dz.classList.add('hidden');
@@ -950,6 +1059,49 @@
                     if (e.target === dropZone) {
                         document.getElementById('mapFile').click();
                     }
+                });
+
+                // Drag-and-drop sur le container quand une map est déjà chargée
+                const gameContainer = document.getElementById('gameContainer');
+                const overlay = document.getElementById('canvasDropOverlay');
+
+                gameContainer.addEventListener('dragenter', (e) => {
+                    e.preventDefault();
+                    if (this.gameState.loaded) overlay.classList.add('active');
+                });
+                gameContainer.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    if (this.gameState.loaded) overlay.classList.add('active');
+                });
+                gameContainer.addEventListener('dragleave', (e) => {
+                    // Only hide if leaving the container entirely
+                    if (!gameContainer.contains(e.relatedTarget)) {
+                        overlay.classList.remove('active');
+                    }
+                });
+                gameContainer.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    overlay.classList.remove('active');
+                    if (this.gameState.loaded) {
+                        const file = e.dataTransfer.files[0];
+                        if (file && file.type.startsWith('image/')) {
+                            this.pendingMapFile = file;
+                            this.showReplaceConfirm(file.name);
+                        }
+                    }
+                });
+
+                // Confirm modal buttons
+                document.getElementById('confirmYes').addEventListener('click', () => {
+                    this.hideReplaceConfirm();
+                    if (this.pendingMapFile) {
+                        this.loadMapFromFile(this.pendingMapFile);
+                        this.pendingMapFile = null;
+                    }
+                });
+                document.getElementById('confirmNo').addEventListener('click', () => {
+                    this.hideReplaceConfirm();
+                    this.pendingMapFile = null;
                 });
             }
 
@@ -1233,7 +1385,11 @@
                         this.toggleDebug();
                     }
 
-                    if (key === 'r' && this.gameState.loaded) {
+                    if (key === 'escape') {
+                    this.hideReplaceConfirm();
+                    this.pendingMapFile = null;
+                }
+                if (key === 'r' && this.gameState.loaded) {
                         this.restartFromGameOver();
                     }
 
