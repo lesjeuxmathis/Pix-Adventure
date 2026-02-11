@@ -20,6 +20,8 @@
             flex-direction: column;
             align-items: center;
             padding: 20px;
+            /* Espace réservé pour la toolbar fixe */
+            padding-top: 130px;
         }
 
         .editor-container {
@@ -33,23 +35,21 @@
         }
 
         .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
+            display: none; /* Caché car intégré dans la toolbar fixe */
         }
 
         h1 {
             color: #4a90e2;
             text-shadow: 0 0 10px rgba(74, 144, 226, 0.5);
-            font-size: 2.5em;
+            font-size: 1.4em;
             text-align: center;
             flex-grow: 1;
+            white-space: nowrap;
         }
 
         .language-selector {
             position: relative;
-            min-width: 120px;
+            min-width: 110px;
         }
 
         .language-select {
@@ -57,9 +57,9 @@
             border: 2px solid #4a90e2;
             border-radius: 8px;
             color: white;
-            padding: 8px 12px;
+            padding: 6px 10px;
             font-family: inherit;
-            font-size: 14px;
+            font-size: 12px;
             cursor: pointer;
             width: 100%;
         }
@@ -74,15 +74,33 @@
             color: white;
         }
 
+        /* ===== TOOLBAR FIXE ===== */
         .toolbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 20px;
-            padding: 15px;
-            background: rgba(74, 144, 226, 0.1);
-            border-radius: 8px;
+            gap: 8px;
+            padding: 10px 20px;
+            background: rgba(10, 12, 30, 0.97);
+            border-bottom: 2px solid #4a90e2;
+            box-shadow: 0 4px 20px rgba(74, 144, 226, 0.3);
             align-items: center;
+            backdrop-filter: blur(8px);
+        }
+
+        /* Ligne titre + langue dans la toolbar */
+        .toolbar-top {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(74, 144, 226, 0.25);
+            margin-bottom: 2px;
         }
 
         .tool-group {
@@ -324,31 +342,43 @@
         }
 
         @media (max-width: 768px) {
-            .header {
-                flex-direction: column;
-                gap: 15px;
+            body {
+                padding-top: 180px;
             }
-            
+
             h1 {
-                font-size: 2em;
+                font-size: 1.1em;
+            }
+
+            .toolbar {
+                padding: 8px 12px;
+                gap: 6px;
+            }
+
+            .tool-btn {
+                width: 34px;
+                height: 34px;
+                font-size: 15px;
             }
         }
     </style>
 </head>
 <body>
     <div class="editor-container">
-        <div class="header">
-            <div></div>
-            <h1 id="pageTitle">🎨 Éditeur de Niveaux</h1>
-            <div class="language-selector">
-                <select id="languageSelect" class="language-select">
-                    <option value="fr">🇫🇷 Français</option>
-                    <option value="en">🇬🇧 English</option>
-                </select>
-            </div>
-        </div>
         
         <div class="toolbar">
+            <!-- Ligne du haut : titre + langue -->
+            <div class="toolbar-top">
+                <h1 id="pageTitle">🎨 Éditeur de Niveaux</h1>
+                <div class="language-selector">
+                    <select id="languageSelect" class="language-select">
+                        <option value="fr">🇫🇷 Français</option>
+                        <option value="en">🇬🇧 English</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Ligne du bas : outils -->
             <div class="tool-group">
                 <a href="index.html" class="action-btn game-btn" id="gameBtn">🎮 JEU</a>
             </div>
