@@ -196,6 +196,36 @@
             font-size: 14px;
         }
 
+        .message-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(74, 144, 226, 0.1);
+            border-radius: 8px;
+            border: 2px solid #4a90e2;
+        }
+
+        .message-input {
+            width: 100%;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #4a90e2;
+            border-radius: 5px;
+            color: white;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .message-input:focus {
+            outline: none;
+            border-color: #27ae60;
+            box-shadow: 0 0 10px rgba(39, 174, 96, 0.5);
+        }
+
+        .message-input::placeholder {
+            color: #888;
+        }
+
         .export-section {
             margin-top: 20px;
             text-align: center;
@@ -267,6 +297,28 @@
             50% { opacity: 0.6; }
         }
 
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
         .pulsing {
             animation: pulse 1s infinite;
         }
@@ -303,9 +355,9 @@
             
             <div class="tool-group">
                 <label id="sizeLabel">Taille:</label>
-                <input type="number" id="widthInput" class="size-input" value="32" min="10" max="100">
+                <input type="number" id="widthInput" class="size-input" value="32" min="10" max="2048">
                 <span>x</span>
-                <input type="number" id="heightInput" class="size-input" value="24" min="10" max="100">
+                <input type="number" id="heightInput" class="size-input" value="24" min="10" max="2048">
                 <button class="action-btn" onclick="editor.createCanvas()" id="createBtn">📐 Créer</button>
             </div>
             
@@ -332,7 +384,27 @@
 
         <canvas id="editorCanvas"></canvas>
 
+        <div class="message-section">
+            <h3 id="messageTitle" style="color: #4a90e2; margin-bottom: 10px;">💬 Messages de Victoire Personnalisés</h3>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div>
+                    <label id="normalModeLabel" style="color: white; font-weight: bold;">🎯 Mode Normal:</label>
+                    <input type="text" id="normalModeMessage" class="message-input" placeholder="Félicitations ! Vous avez terminé le niveau en mode normal !" maxlength="100">
+                </div>
+                <div>
+                    <label id="sandboxModeLabel" style="color: white; font-weight: bold;">🏖️ Mode Bac à Sable:</label>
+                    <input type="text" id="sandboxModeMessage" class="message-input" placeholder="Bravo ! Niveau terminé en mode bac à sable !" maxlength="100">
+                </div>
+            </div>
+        </div>
+
         <div class="export-section">
+            <button class="action-btn" onclick="editor.playMap()" style="background: linear-gradient(45deg, #9b59b6, #8e44ad);" id="playBtn">
+                🎮 Jouer
+            </button>
+            <button class="action-btn" onclick="editor.shareMap()" style="background: linear-gradient(45deg, #3498db, #2980b9);" id="shareBtn">
+                🔗 Partager
+            </button>
             <button class="action-btn" onclick="editor.download()" style="background: linear-gradient(45deg, #27ae60, #2ecc71);" id="downloadBtn">
                 💾 Télécharger PNG
             </button>
@@ -408,6 +480,8 @@
                 clearBtn: "🗑️ Vider",
                 fillBtn: "⬛ Remplir",
                 downloadBtn: "💾 Télécharger PNG",
+                playBtn: "🎮 Jouer",
+                shareBtn: "🔗 Partager",
                 loadBtn: "📂 Charger Image",
                 legendWall: "🧱 Mur/Sol (Noir)",
                 legendCoin: "🪙 Pièce (Jaune)",
@@ -426,6 +500,12 @@
                 confirmFillMessage: "ATTENTION : Cette action remplira tout le canvas avec des murs. Voulez-vous continuer ?",
                 confirmBtn: "Confirmer",
                 cancelBtn: "Annuler",
+                mapShared: "🔗 Lien copié ! Vous pouvez maintenant le partager.",
+                mapTooLarge: "⚠️ La map est trop grande pour être partagée par URL (max 2048x2048)",
+                mapLoadedFromURL: "📥 Map chargée depuis l'URL !",
+                messageTitle: "💬 Messages de Victoire Personnalisés",
+                normalModeLabel: "🎯 Mode Normal:",
+                sandboxModeLabel: "🏖️ Mode Bac à Sable:",
                 tooltips: {
                     wall: "Mur",
                     coin: "Pièce",
@@ -451,6 +531,8 @@
                 clearBtn: "🗑️ Clear",
                 fillBtn: "⬛ Fill",
                 downloadBtn: "💾 Download PNG",
+                playBtn: "🎮 Play",
+                shareBtn: "🔗 Share",
                 loadBtn: "📂 Load Image",
                 legendWall: "🧱 Wall/Ground (Black)",
                 legendCoin: "🪙 Coin (Yellow)",
@@ -469,6 +551,12 @@
                 confirmFillMessage: "WARNING: This action will fill the entire canvas with walls. Do you want to continue?",
                 confirmBtn: "Confirm",
                 cancelBtn: "Cancel",
+                mapShared: "🔗 Link copied! You can now share it.",
+                mapTooLarge: "⚠️ Map is too large to share via URL (max 2048x2048)",
+                mapLoadedFromURL: "📥 Map loaded from URL!",
+                messageTitle: "💬 Custom Victory Messages",
+                normalModeLabel: "🎯 Normal Mode:",
+                sandboxModeLabel: "🏖️ Sandbox Mode:",
                 tooltips: {
                     wall: "Wall",
                     coin: "Coin",
@@ -601,7 +689,10 @@
             
             init() {
                 this.setupEventListeners();
-                this.createCanvas();
+                // Charger depuis l'URL si disponible, sinon créer un canvas vide
+                if (!this.loadFromURL()) {
+                    this.createCanvas();
+                }
             }
             
             saveState() {
@@ -901,6 +992,143 @@
                 };
                 
                 img.src = URL.createObjectURL(file);
+            }
+            
+            shareMap() {
+                // Vérifier la taille de la map
+                if (this.width > 2048 || this.height > 2048) {
+                    this.showMessage(languageManager.getText('mapTooLarge'), 'error');
+                    return;
+                }
+                
+                // Récupérer les messages personnalisés
+                const normalMessage = document.getElementById('normalModeMessage').value || '';
+                const sandboxMessage = document.getElementById('sandboxModeMessage').value || '';
+                
+                // Encoder la map en JSON puis en base64
+                const mapData = {
+                    width: this.width,
+                    height: this.height,
+                    grid: this.grid,
+                    messages: {
+                        normal: normalMessage,
+                        sandbox: sandboxMessage
+                    }
+                };
+                
+                const jsonString = JSON.stringify(mapData);
+                const base64Data = btoa(encodeURIComponent(jsonString));
+                
+                // Créer l'URL pour index.html avec les données
+                const currentUrl = new URL(window.location.href);
+                const indexUrl = currentUrl.href.replace('editor.html', 'index.html');
+                const url = new URL(indexUrl);
+                url.searchParams.set('map', base64Data);
+                
+                // Copier dans le presse-papier (sans ouvrir)
+                navigator.clipboard.writeText(url.toString()).then(() => {
+                    this.showMessage(languageManager.getText('mapShared'), 'success');
+                }).catch(() => {
+                    // Fallback si le clipboard ne fonctionne pas
+                    prompt('Copiez ce lien:', url.toString());
+                });
+            }
+            
+            playMap() {
+                // Vérifier la taille de la map
+                if (this.width > 2048 || this.height > 2048) {
+                    this.showMessage(languageManager.getText('mapTooLarge'), 'error');
+                    return;
+                }
+                
+                // Récupérer les messages personnalisés
+                const normalMessage = document.getElementById('normalModeMessage').value || '';
+                const sandboxMessage = document.getElementById('sandboxModeMessage').value || '';
+                
+                // Encoder la map en JSON puis en base64
+                const mapData = {
+                    width: this.width,
+                    height: this.height,
+                    grid: this.grid,
+                    messages: {
+                        normal: normalMessage,
+                        sandbox: sandboxMessage
+                    }
+                };
+                
+                const jsonString = JSON.stringify(mapData);
+                const base64Data = btoa(encodeURIComponent(jsonString));
+                
+                // Créer l'URL pour index.html avec les données
+                const currentUrl = new URL(window.location.href);
+                const indexUrl = currentUrl.href.replace('editor.html', 'index.html');
+                const url = new URL(indexUrl);
+                url.searchParams.set('map', base64Data);
+                
+                // Ouvrir dans un nouvel onglet
+                window.open(url.toString(), '_blank');
+            }
+            
+            loadFromURL() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const mapData = urlParams.get('map');
+                
+                if (mapData) {
+                    try {
+                        const jsonString = decodeURIComponent(atob(mapData));
+                        const data = JSON.parse(jsonString);
+                        
+                        // Vérifier la validité des données
+                        if (data.width && data.height && data.grid) {
+                            this.width = data.width;
+                            this.height = data.height;
+                            this.grid = data.grid;
+                            
+                            document.getElementById('widthInput').value = this.width;
+                            document.getElementById('heightInput').value = this.height;
+                            
+                            // Charger les messages personnalisés si présents
+                            if (data.messages) {
+                                document.getElementById('normalModeMessage').value = data.messages.normal || '';
+                                document.getElementById('sandboxModeMessage').value = data.messages.sandbox || '';
+                            }
+                            
+                            this.canvas.width = this.width * this.CELL_SIZE;
+                            this.canvas.height = this.height * this.CELL_SIZE;
+                            
+                            this.render();
+                            this.showMessage(languageManager.getText('mapLoadedFromURL'), 'success');
+                            return true;
+                        }
+                    } catch (e) {
+                        console.error('Erreur lors du chargement de la map depuis l\'URL:', e);
+                    }
+                }
+                return false;
+            }
+            
+            showMessage(text, type = 'info') {
+                const message = document.createElement('div');
+                message.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    padding: 15px 25px;
+                    background: ${type === 'success' ? 'linear-gradient(45deg, #27ae60, #2ecc71)' : type === 'error' ? 'linear-gradient(45deg, #e74c3c, #c0392b)' : 'linear-gradient(45deg, #3498db, #2980b9)'};
+                    color: white;
+                    border-radius: 10px;
+                    font-weight: bold;
+                    z-index: 10000;
+                    animation: slideIn 0.3s ease-out;
+                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+                `;
+                message.textContent = text;
+                document.body.appendChild(message);
+                
+                setTimeout(() => {
+                    message.style.animation = 'slideOut 0.3s ease-out';
+                    setTimeout(() => document.body.removeChild(message), 300);
+                }, 3000);
             }
         }
         

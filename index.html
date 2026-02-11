@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-site-verification" content="VvoLiBmGp_viHeyTR3E6GRmrf_zVSzEbQQhwo-xx3Ic" />
     <title>🎮 Pix’Adventure 🎨</title>
     <style>
         * {
@@ -120,22 +121,6 @@
             border-radius: 5px;
             cursor: pointer;
             background: none;
-        }
-
-        .skin-select {
-            background: rgba(74, 144, 226, 0.2);
-            border: 2px solid #4a90e2;
-            border-radius: 5px;
-            color: white;
-            padding: 8px 12px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            cursor: pointer;
-        }
-
-        .skin-select option {
-            background: #1a1a2e;
-            color: white;
         }
 
         .sandbox-btn {
@@ -447,6 +432,69 @@
             display: block;
             animation: pulse 2s infinite;
         }
+
+        /* Zone de glisser-déposer */
+        .drop-zone {
+            border: 2px dashed #4a90e2;
+            border-radius: 12px;
+            padding: 18px 20px;
+            margin-bottom: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(74, 144, 226, 0.05);
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            background: rgba(74, 144, 226, 0.15);
+            border-color: #7ab8f5;
+            box-shadow: 0 0 20px rgba(74, 144, 226, 0.3);
+        }
+        .drop-zone.dragover {
+            border-style: solid;
+            animation: borderPulse 0.8s infinite alternate;
+        }
+        @keyframes borderPulse {
+            from { box-shadow: 0 0 10px rgba(74, 144, 226, 0.4); }
+            to   { box-shadow: 0 0 25px rgba(74, 144, 226, 0.8); }
+        }
+        .drop-zone-icon { font-size: 2em; display: block; margin-bottom: 4px; }
+        .drop-zone-text { color: #aaa; font-size: 0.82em; margin-bottom: 8px; }
+        .drop-zone-text span { color: #4a90e2; text-decoration: underline; }
+        .timer { color: #4ecdc4; }
+        .color-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            justify-content: center;
+            margin-top: 8px;
+            padding: 8px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            font-size: 0.73em;
+        }
+        .color-legend-item { display: flex; align-items: center; gap: 4px; }
+        .color-swatch {
+            width: 11px; height: 11px;
+            border-radius: 2px;
+            border: 1px solid rgba(255,255,255,0.3);
+            flex-shrink: 0;
+        }
+        .toast {
+            position: fixed;
+            bottom: 30px; left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: rgba(74, 144, 226, 0.92);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em; font-weight: bold;
+            z-index: 20000;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            pointer-events: none;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
     </style>
 </head>
 <body>
@@ -463,9 +511,23 @@
             <h1>🎮 Pix’Adventure</h1>
             <div class="map-info" id="mapInfo">Chargez une image de map pour commencer</div>
         </div>
-        <div class="file-input-container">
+        <div id="dropZone" class="drop-zone">
+            <span class="drop-zone-icon">🗂️</span>
+            <div class="drop-zone-text">Glissez-déposez votre map ici<br>ou <span onclick="document.getElementById('mapFile').click()">cliquez pour charger un fichier</span></div>
             <input type="file" id="mapFile" class="file-input" accept="image/*">
             <label for="mapFile" class="file-label">📁 Charger une Map</label>
+            <div class="color-legend" title="Guide des couleurs de map">
+                <div class="color-legend-item"><div class="color-swatch" style="background:#000"></div>Mur</div>
+                <div class="color-legend-item"><div class="color-swatch" style="background:#fff;border-color:#555"></div>Vide</div>
+                <div class="color-legend-item"><div class="color-swatch" style="background:#00ff00"></div>Spawn</div>
+                <div class="color-legend-item"><div class="color-swatch" style="background:#0000ff"></div>Fin</div>
+                <div class="color-legend-item"><div class="color-swatch" style="background:#ffff00"></div>Pièce</div>
+                <div class="color-legend-item"><div class="color-swatch" style="background:#ff0000"></div>Danger</div>
+                <div class="color-legend-item"><div class="color-swatch" style="background:#00ffff"></div>Checkpoint</div>
+                <div class="color-legend-item"><div class="color-swatch" style="background:#ff00ff"></div>Boost saut</div>
+                <div class="color-legend-item"><div class="color-swatch" style="background:#ffa500"></div>Levier</div>
+                <div class="color-legend-item"><div class="color-swatch" style="background:#808080"></div>Bloc ON/OFF</div>
+            </div>
         </div>
 
         <div id="endScreen" class="end-screen">
@@ -494,13 +556,10 @@
 
         <div class="ui-panel">
             <div class="ui-item score">💰 Score: <span id="score">0</span></div>
+            <div class="ui-item timer">⏱️ <span id="timer">00:00</span></div>
             <div class="ui-controls">
                 <input type="color" id="skinColorPicker" value="#ff6b6b" title="Couleur du skin">
                 <input type="color" id="outlineColorPicker" value="#ffffff" title="Couleur du contour">
-                <select id="skinSelector" class="skin-select" title="Choisir un skin">
-                    <option value="default">Défaut</option>
-                    <option value="halloween">Jack-o'-lantern (Halloween)</option>
-                </select>
                 <button id="sandboxBtn" class="sandbox-btn">🏖️ Bac à sable</button>
                 <button id="editorBtn" class="sandbox-btn">🎨 Éditeur</button>
                 <button id="remapBtn" class="sandbox-btn">⌨️ Custom Touches</button>
@@ -547,6 +606,7 @@
     </div>
 
     <div class="debug-info" id="debugInfo"></div>
+    <div class="toast" id="toastNotif"></div>
 
     <script>
         class PixelPlatformer {
@@ -618,6 +678,8 @@
                         mode: "🎮 Mode:",
                         perfect: "⭐ PARFAIT ! Toutes les pièces collectées !",
                         normal: "🎯 Normal",
+                        victoryMessageNormal: "🏆 Félicitations ! Vous avez terminé le niveau en mode normal !",
+                        victoryMessageSandbox: "🏖️ Bravo ! Niveau terminé en mode bac à sable !",
                         leverActivated: "🔶 Levier activé ! Blocs gris désactivés",
                         controllerConnected: "🎮 Manette connectée !",
                         controllerDisconnected: "🎮 Manette déconnectée",
@@ -664,6 +726,8 @@
                         mode: "🎮 Mode:",
                         perfect: "⭐ PERFECT! All coins collected!",
                         normal: "🎯 Normal",
+                        victoryMessageNormal: "🏆 Congratulations! You completed the level in normal mode!",
+                        victoryMessageSandbox: "🏖️ Well done! Level completed in sandbox mode!",
                         leverActivated: "🔶 Lever activated! Gray blocks deactivated",
                         controllerConnected: "🎮 Controller connected!",
                         controllerDisconnected: "🎮 Controller disconnected",
@@ -684,6 +748,11 @@
                     debugMode: false,
                     sandboxMode: false
                 };
+
+                // Timer
+                this.timerStartTime = null;
+                this.timerElapsed = 0;
+                this.timerRunning = false;
 
                 // Map
                 this.map = {
@@ -817,6 +886,9 @@
                 // Particules
                 this.particles = [];
 
+                // Messages personnalisés (chargés depuis l'URL si disponibles)
+                this.customMessages = null;
+
                 this.init();
             }
 
@@ -826,14 +898,90 @@
                 this.setupGamepad();
                 this.setupFullscreen();
                 this.setupSkinColorPicker();
-                this.setupSkinSelector();
                 this.setupSandboxMode();
                 this.setupEditor();
                 this.setupLanguage();
                 this.setupKeyRemapping();
                 this.setupSettings();
+                this.setupDropZone();
+                this.setupTimer();
                 this.loadDefaultMap();
                 this.gameLoop();
+            }
+
+            setupDropZone() {
+                const dropZone = document.getElementById('dropZone');
+                if (!dropZone) return;
+
+                ['dragenter', 'dragover'].forEach(ev => {
+                    dropZone.addEventListener(ev, (e) => {
+                        e.preventDefault();
+                        dropZone.classList.add('dragover');
+                    });
+                });
+
+                ['dragleave', 'drop'].forEach(ev => {
+                    dropZone.addEventListener(ev, (e) => {
+                        e.preventDefault();
+                        dropZone.classList.remove('dragover');
+                    });
+                });
+
+                dropZone.addEventListener('drop', (e) => {
+                    const file = e.dataTransfer.files[0];
+                    if (file && file.type.startsWith('image/')) {
+                        this.loadMapFromFile(file);
+                    }
+                });
+
+                // Also allow clicking the drop zone (not the label)
+                dropZone.addEventListener('click', (e) => {
+                    if (e.target === dropZone) {
+                        document.getElementById('mapFile').click();
+                    }
+                });
+            }
+
+            setupTimer() {
+                // Timer started when level loads, stopped on win/game over
+            }
+
+            startTimer() {
+                this.timerStartTime = Date.now() - (this.timerElapsed * 1000);
+                this.timerRunning = true;
+            }
+
+            stopTimer() {
+                if (this.timerRunning) {
+                    this.timerElapsed = (Date.now() - this.timerStartTime) / 1000;
+                }
+                this.timerRunning = false;
+            }
+
+            resetTimer() {
+                this.timerStartTime = null;
+                this.timerElapsed = 0;
+                this.timerRunning = false;
+                const el = document.getElementById('timer');
+                if (el) el.textContent = '00:00';
+            }
+
+            updateTimer() {
+                if (!this.timerRunning) return;
+                const elapsed = (Date.now() - this.timerStartTime) / 1000;
+                const mins = Math.floor(elapsed / 60).toString().padStart(2, '0');
+                const secs = Math.floor(elapsed % 60).toString().padStart(2, '0');
+                const el = document.getElementById('timer');
+                if (el) el.textContent = `${mins}:${secs}`;
+            }
+
+            showToast(message, duration = 2500) {
+                const toast = document.getElementById('toastNotif');
+                if (!toast) return;
+                toast.textContent = message;
+                toast.classList.add('show');
+                clearTimeout(this._toastTimeout);
+                this._toastTimeout = setTimeout(() => toast.classList.remove('show'), duration);
             }
 
             setupSettings() {
@@ -865,14 +1013,6 @@
                 });
                 outlineColorPicker.addEventListener('change', (e) => {
                     this.player.outlineColor = e.target.value;
-                });
-            }
-
-            setupSkinSelector() {
-                const skinSelector = document.getElementById('skinSelector');
-                skinSelector.addEventListener('change', (e) => {
-                    this.player.skin = e.target.value;
-                    this.showMessage(this.t('skinChanged'));
                 });
             }
 
@@ -1275,6 +1415,22 @@
                 }
             }
 
+            async loadMapFromFile(file) {
+                try {
+                    const img = await this.loadImage(file);
+                    await this.processMapImage(img);
+                    this.initializeLevel();
+                    this.gameState.loaded = true;
+                    this.showMessage(this.t('mapLoaded'));
+                    this.showToast('🗂️ Map chargée : ' + file.name);
+                    document.getElementById('mapInfo').textContent =
+                        `Map: ${this.map.width}x${this.map.height} pixels`;
+                } catch (error) {
+                    console.error('Erreur lors du chargement:', error);
+                    this.showMessage(this.t('loadError'));
+                }
+            }
+
             loadImage(file) {
                 return new Promise((resolve, reject) => {
                     const img = new Image();
@@ -1367,6 +1523,8 @@
                 }
 
                 this.updateUI();
+                this.resetTimer();
+                this.startTimer();
             }
 
             getPixelColor(x, y) {
@@ -1602,9 +1760,14 @@
                 const gameOverScreen = document.getElementById('gameOverScreen');
                 const gameOverStats = document.getElementById('gameOverStats');
 
+                this.stopTimer();
+                const elapsed = this.timerElapsed || (this.timerStartTime ? (Date.now() - this.timerStartTime) / 1000 : 0);
+                const goMins = Math.floor(elapsed / 60).toString().padStart(2, '0');
+                const goSecs = Math.floor(elapsed % 60).toString().padStart(2, '0');
                 gameOverStats.innerHTML = `
                     ${this.t('finalScore')} ${this.game.score}<br>
                     ${this.t('coins')} ${coinsCollected}/${totalCoins} (${coinPercentage}%)<br>
+                    ⏱️ Temps: ${goMins}:${goSecs}<br>
                     ${this.t('mode')} ${this.gameState.sandboxMode ? this.t('sandbox') : this.t('normal')}<br>
                 `;
 
@@ -1622,9 +1785,29 @@
                 const endScreen = document.getElementById('endScreen');
                 const endStats = document.getElementById('endStats');
 
+                // Utiliser le message personnalisé s'il existe, sinon utiliser le message par défaut
+                let victoryMessage;
+                if (this.customMessages) {
+                    victoryMessage = this.gameState.sandboxMode 
+                        ? (this.customMessages.sandbox || this.t('victoryMessageSandbox'))
+                        : (this.customMessages.normal || this.t('victoryMessageNormal'));
+                } else {
+                    victoryMessage = this.gameState.sandboxMode 
+                        ? this.t('victoryMessageSandbox')
+                        : this.t('victoryMessageNormal');
+                }
+
+                this.stopTimer();
+                const lcElapsed = this.timerElapsed || (this.timerStartTime ? (Date.now() - this.timerStartTime) / 1000 : 0);
+                const lcMins = Math.floor(lcElapsed / 60).toString().padStart(2, '0');
+                const lcSecs = Math.floor(lcElapsed % 60).toString().padStart(2, '0');
                 endStats.innerHTML = `
+                    <div style="font-size: 1.2em; color: #4a90e2; margin-bottom: 15px; font-weight: bold;">
+                        ${victoryMessage}
+                    </div>
                     ${this.t('finalScore')} ${this.game.score}<br>
                     ${this.t('coins')} ${coinsCollected}/${totalCoins} (${coinPercentage}%)<br>
+                    ⏱️ Temps: ${lcMins}:${lcSecs}<br>
                     ${this.t('livesLeft')} ${this.game.lives}<br>
                     ${this.t('mode')} ${this.gameState.sandboxMode ? this.t('sandbox') : this.t('normal')}<br>
                     ${coinPercentage === 100 ? this.t('perfect') : ''}
@@ -1670,6 +1853,8 @@
                     this.particles = [];
 
                     this.updateUI();
+                    this.resetTimer();
+                    this.startTimer();
                     this.showMessage(this.t('levelRestarted'));
                 }
             }
@@ -1983,6 +2168,7 @@
             updateUI() {
                 document.getElementById('score').textContent = this.game.score;
                 document.getElementById('lives').textContent = this.game.lives;
+                this.updateTimer();
             }
 
             toggleDebug() {
@@ -1999,11 +2185,66 @@
                     this.render();
                     this.lastFrame = now;
                 }
+                this.updateTimer();
                 requestAnimationFrame(() => this.gameLoop());
             }
         }
 
         const game = new PixelPlatformer();
+        
+        // Charger automatiquement la map depuis l'URL si disponible
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const mapData = urlParams.get('map');
+            
+            if (mapData) {
+                try {
+                    const jsonString = decodeURIComponent(atob(mapData));
+                    const data = JSON.parse(jsonString);
+                    
+                    if (data.width && data.height && data.grid) {
+                        // Créer une image à partir des données de la grille
+                        const canvas = document.createElement('canvas');
+                        canvas.width = data.width;
+                        canvas.height = data.height;
+                        const ctx = canvas.getContext('2d');
+                        
+                        const imageData = ctx.createImageData(data.width, data.height);
+                        
+                        for (let y = 0; y < data.height; y++) {
+                            for (let x = 0; x < data.width; x++) {
+                                const pixelIndex = (y * data.width + x) * 4;
+                                const color = data.grid[y][x];
+                                imageData.data[pixelIndex] = color[0];
+                                imageData.data[pixelIndex + 1] = color[1];
+                                imageData.data[pixelIndex + 2] = color[2];
+                                imageData.data[pixelIndex + 3] = 255;
+                            }
+                        }
+                        
+                        ctx.putImageData(imageData, 0, 0);
+                        
+                        // Stocker les messages personnalisés s'ils existent
+                        if (data.messages) {
+                            game.customMessages = data.messages;
+                        }
+                        
+                        // Charger l'image dans le jeu
+                        const img = new Image();
+                        img.onload = async () => {
+                            await game.processMapImage(img);
+                            game.initializeLevel();
+                            game.gameState.loaded = true;
+                            game.showMessage('📥 ' + game.t('mapLoaded'));
+                            document.getElementById('mapInfo').textContent = `Map: ${data.width}x${data.height} pixels`;
+                        };
+                        img.src = canvas.toDataURL();
+                    }
+                } catch (e) {
+                    console.error('Erreur lors du chargement de la map depuis l\'URL:', e);
+                }
+            }
+        });
     </script>
 </body>
 </html>
