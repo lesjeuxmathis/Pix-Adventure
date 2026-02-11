@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🎨 Pix'Adventure - Éditeur</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -1109,6 +1110,20 @@
                 return compressed;
             }
             
+            compressData(mapData) {
+                // Convertir en JSON
+                const jsonString = JSON.stringify(mapData);
+                
+                // Compresser avec gzip
+                const compressed = pako.deflate(jsonString);
+                
+                // Convertir en base64 URL-safe
+                let base64 = btoa(String.fromCharCode.apply(null, compressed));
+                base64 = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+                
+                return base64;
+            }
+            
             shareMap() {
                 // Vérifier la taille de la map
                 if (this.width > 2048 || this.height > 2048) {
@@ -1125,20 +1140,19 @@
                     w: this.width,
                     h: this.height,
                     d: this.compressGrid(),
-                    messages: {
-                        normal: normalMessage,
-                        sandbox: sandboxMessage
+                    m: {
+                        n: normalMessage,
+                        s: sandboxMessage
                     }
                 };
                 
-                const jsonString = JSON.stringify(mapData);
-                const base64Data = btoa(jsonString);
+                const compressedData = this.compressData(mapData);
                 
                 // Créer l'URL pour index.html avec les données
                 const currentUrl = new URL(window.location.href);
                 const indexUrl = currentUrl.href.replace('editor.html', 'index.html');
                 const url = new URL(indexUrl);
-                url.searchParams.set('map', base64Data);
+                url.searchParams.set('m', compressedData);
                 
                 // Copier dans le presse-papier (sans ouvrir)
                 navigator.clipboard.writeText(url.toString()).then(() => {
@@ -1165,20 +1179,19 @@
                     w: this.width,
                     h: this.height,
                     d: this.compressGrid(),
-                    messages: {
-                        normal: normalMessage,
-                        sandbox: sandboxMessage
+                    m: {
+                        n: normalMessage,
+                        s: sandboxMessage
                     }
                 };
                 
-                const jsonString = JSON.stringify(mapData);
-                const base64Data = btoa(jsonString);
+                const compressedData = this.compressData(mapData);
                 
                 // Créer l'URL pour index.html avec les données
                 const currentUrl = new URL(window.location.href);
                 const indexUrl = currentUrl.href.replace('editor.html', 'index.html');
                 const url = new URL(indexUrl);
-                url.searchParams.set('map', base64Data);
+                url.searchParams.set('m', compressedData);
                 
                 // Ouvrir dans un nouvel onglet
                 window.open(url.toString(), '_blank');
@@ -1200,20 +1213,19 @@
                     w: this.width,
                     h: this.height,
                     d: this.compressGrid(),
-                    messages: {
-                        normal: normalMessage,
-                        sandbox: sandboxMessage
+                    m: {
+                        n: normalMessage,
+                        s: sandboxMessage
                     }
                 };
                 
-                const jsonString = JSON.stringify(mapData);
-                const base64Data = btoa(jsonString);
+                const compressedData = this.compressData(mapData);
                 
                 // Créer l'URL pour index.html avec les données
                 const currentUrl = new URL(window.location.href);
                 const indexUrl = currentUrl.href.replace('editor.html', 'index.html');
                 const url = new URL(indexUrl);
-                url.searchParams.set('map', base64Data);
+                url.searchParams.set('m', compressedData);
                 
                 // Afficher le panneau de prévisualisation
                 const previewPanel = document.getElementById('previewPanel');

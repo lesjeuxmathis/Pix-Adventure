@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google-site-verification" content="VvoLiBmGp_viHeyTR3E6GRmrf_zVSzEbQQhwo-xx3Ic" />
     <title>🎮 Pix’Adventure 🎨</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -2367,55 +2368,124 @@
         // Charger automatiquement la map depuis l'URL si disponible
         window.addEventListener('load', () => {
             const urlParams = new URLSearchParams(window.location.search);
-            const mapData = urlParams.get('map');
             
-            if (mapData) {
-                try {
-                    const jsonString = decodeURIComponent(atob(mapData));
-                    const data = JSON.parse(jsonString);
+            // Nouveau format compressé avec gzip
+            let compressedData = urlParams.get('m');
+            // Ancien format
+            let mapData = urlParams.get('map');
+            
+            let data = null;
+            
+            try {
+                if (compressedData) {
+                    // Décompresser le nouveau format
+                    // Restaurer les caractères base64 standards
+                    compressedData = compressedData.replace(/-/g, '+').replace(/_/g, '/');
+                    while (compressedData.length % 4) {
+                        compressedData += '=';
+                    }
                     
-                    if (data.width && data.height && data.grid) {
-                        // Créer une image à partir des données de la grille
-                        const canvas = document.createElement('canvas');
-                        canvas.width = data.width;
-                        canvas.height = data.height;
-                        const ctx = canvas.getContext('2d');
+                    // Convertir base64 en binaire
+                    const binaryString = atob(compressedData);
+                    const bytes = new Uint8Array(binaryString.length);
+                    for (let i = 0; i < binaryString.length; i++) {
+                        bytes[i] = binaryString.charCodeAt(i);
+                    }
+                    
+                    // Décompresser avec pako
+                    const decompressed = pako.inflate(bytes, { to: 'string' });
+                    data = JSON.parse(decompressed);
+                    
+                } else if (mapData) {
+                    // Ancien format (rétrocompatibilité)
+                    const jsonString = atob(mapData);
+                    data = JSON.parse(jsonString);
+                }
+                
+                if (data) {
+                    // Support des deux formats : nouveau (w/h/d/m) et ancien (width/height/grid/messages)
+                    const width = data.w || data.width;
+                    const height = data.h || data.height;
+                    
+                    if (width && height) {
+                        let grid;
                         
-                        const imageData = ctx.createImageData(data.width, data.height);
-                        
-                        for (let y = 0; y < data.height; y++) {
-                            for (let x = 0; x < data.width; x++) {
-                                const pixelIndex = (y * data.width + x) * 4;
-                                const color = data.grid[y][x];
-                                imageData.data[pixelIndex] = color[0];
-                                imageData.data[pixelIndex + 1] = color[1];
-                                imageData.data[pixelIndex + 2] = color[2];
-                                imageData.data[pixelIndex + 3] = 255;
+                        // Nouveau format compressé (RLE)
+                        if (data.d) {
+                            // Décompresser toutes les données RLE
+                            const pixels = [];
+                            for (const chunk of data.d) {
+                                const [r, g, b, count] = chunk;
+                                for (let i = 0; i < count; i++) {
+                                    pixels.push([r, g, b]);
+                                }
+                            }
+                            
+                            // Réorganiser en grille 2D
+                            grid = [];
+                            let pixelIndex = 0;
+                            for (let y = 0; y < height; y++) {
+                                grid[y] = [];
+                                for (let x = 0; x < width; x++) {
+                                    grid[y][x] = pixels[pixelIndex++];
+                                }
                             }
                         }
-                        
-                        ctx.putImageData(imageData, 0, 0);
-                        
-                        // Stocker les messages personnalisés s'ils existent
-                        if (data.messages) {
-                            game.customMessages = data.messages;
+                        // Ancien format non compressé
+                        else if (data.grid) {
+                            grid = data.grid;
                         }
                         
-                        // Charger l'image dans le jeu
-                        const img = new Image();
-                        img.onload = async () => {
-                            await game.processMapImage(img);
-                            game.initializeLevel();
-                            game.gameState.loaded = true;
-                            game.hideDropZone();
-                            game.showMessage('📥 ' + game.t('mapLoaded'));
-                            document.getElementById('mapInfo').textContent = `Map: ${data.width}x${data.height} pixels`;
-                        };
-                        img.src = canvas.toDataURL();
+                        if (grid) {
+                            // Créer une image à partir des données de la grille
+                            const canvas = document.createElement('canvas');
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            
+                            const imageData = ctx.createImageData(width, height);
+                            
+                            for (let y = 0; y < height; y++) {
+                                for (let x = 0; x < width; x++) {
+                                    const pixelIndex = (y * width + x) * 4;
+                                    const color = grid[y][x];
+                                    imageData.data[pixelIndex] = color[0];
+                                    imageData.data[pixelIndex + 1] = color[1];
+                                    imageData.data[pixelIndex + 2] = color[2];
+                                    imageData.data[pixelIndex + 3] = 255;
+                                }
+                            }
+                            
+                            ctx.putImageData(imageData, 0, 0);
+                            
+                            // Stocker les messages personnalisés
+                            if (data.m) {
+                                // Nouveau format (m.n et m.s)
+                                game.customMessages = {
+                                    normal: data.m.n || '',
+                                    sandbox: data.m.s || ''
+                                };
+                            } else if (data.messages) {
+                                // Ancien format
+                                game.customMessages = data.messages;
+                            }
+                            
+                            // Charger l'image dans le jeu
+                            const img = new Image();
+                            img.onload = async () => {
+                                await game.processMapImage(img);
+                                game.initializeLevel();
+                                game.gameState.loaded = true;
+                                game.hideDropZone();
+                                game.showMessage('📥 ' + game.t('mapLoaded'));
+                                document.getElementById('mapInfo').textContent = `Map: ${width}x${height} pixels`;
+                            };
+                            img.src = canvas.toDataURL();
+                        }
                     }
-                } catch (e) {
-                    console.error('Erreur lors du chargement de la map depuis l\'URL:', e);
                 }
+            } catch (e) {
+                console.error('Erreur lors du chargement de la map depuis l\'URL:', e);
             }
         });
     </script>
