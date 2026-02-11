@@ -460,6 +460,7 @@
         .drop-zone-icon { font-size: 2em; display: block; margin-bottom: 4px; }
         .drop-zone-text { color: #aaa; font-size: 0.82em; margin-bottom: 8px; }
         .drop-zone-text span { color: #4a90e2; text-decoration: underline; }
+        .drop-zone.hidden { display: none !important; }
         .timer { color: #4ecdc4; }
         .color-legend {
             display: flex;
@@ -909,6 +910,16 @@
                 this.gameLoop();
             }
 
+            hideDropZone() {
+                const dz = document.getElementById('dropZone');
+                if (dz) dz.classList.add('hidden');
+            }
+
+            showDropZone() {
+                const dz = document.getElementById('dropZone');
+                if (dz) dz.classList.remove('hidden');
+            }
+
             setupDropZone() {
                 const dropZone = document.getElementById('dropZone');
                 if (!dropZone) return;
@@ -1094,6 +1105,7 @@
                     await this.processMapImage(img);
                     this.initializeLevel();
                     this.gameState.loaded = true;
+                    this.hideDropZone();
                     this.showMessage(this.t('mapLoaded'));
 
                     document.getElementById('mapInfo').textContent =
@@ -1405,6 +1417,7 @@
                     await this.processMapImage(img);
                     this.initializeLevel();
                     this.gameState.loaded = true;
+                    this.hideDropZone();
                     this.showMessage(this.t('mapLoaded'));
 
                     document.getElementById('mapInfo').textContent =
@@ -1421,6 +1434,7 @@
                     await this.processMapImage(img);
                     this.initializeLevel();
                     this.gameState.loaded = true;
+                    this.hideDropZone();
                     this.showMessage(this.t('mapLoaded'));
                     this.showToast('🗂️ Map chargée : ' + file.name);
                     document.getElementById('mapInfo').textContent =
@@ -1862,7 +1876,9 @@
             loadNewMap() {
                 document.getElementById('endScreen').style.display = 'none';
                 document.getElementById('gameOverScreen').style.display = 'none';
-                document.getElementById('mapFile').click();
+                this.showDropZone();
+                this.gameState.loaded = false;
+                document.getElementById('mapInfo').textContent = this.t('mapInfo');
             }
 
             updateCamera() {
@@ -2235,6 +2251,7 @@
                             await game.processMapImage(img);
                             game.initializeLevel();
                             game.gameState.loaded = true;
+                            game.hideDropZone();
                             game.showMessage('📥 ' + game.t('mapLoaded'));
                             document.getElementById('mapInfo').textContent = `Map: ${data.width}x${data.height} pixels`;
                         };
